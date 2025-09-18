@@ -1,0 +1,18 @@
+debug: true
+port: 8080
+sqlite3:
+  uri: "goi_example.db"
+
+#mysql:
+#  uri: "xxx:xxx@tcp(127.0.0.1:3306)/goi_example"
+
+#redis:
+#  addr: "127.0.0.1:6379"
+#  password: "xxxx"
+#  db: 10
+
+#mongodb:
+#  uri: "mongodb://127.0.0.1:27017"
+#  username: "xxx"
+#  password: "xxx"
+#  database: "goi_example"

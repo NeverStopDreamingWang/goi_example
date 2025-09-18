@@ -1,2 +1,3 @@
-# goi_example
+# Goi Example
+
 一个用于存放 Goi 示例和教程的资源库。

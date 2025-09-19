@@ -166,21 +166,22 @@ go run main.go
 
 - `goi.StaticFileView(filePath string) HandlerFunc`
 - `goi.StaticDirView(dirPath http.Dir) HandlerFunc`
-- `goi.StaticFileFSView(fs embed.FS) HandlerFunc`
-- `goi.StaticDirFSView(fs embed.FS) HandlerFunc`
+- `goi.StaticFileFSView(fs embed.FS, defaultPath string) HandlerFunc`
+- `goi.StaticDirFSView(fs embed.FS, basePath string) HandlerFunc`
 
 示例：
 
 ```go
 // 单文件
-router.Path("index.html", "首页", goi.ViewSet{GET: goi.StaticFileView("template/html/index.html"),})
+router.Path("test.txt", "测试文件", goi.ViewSet{GET: goi.StaticFileView("static/test.txt"),})
 
 // 目录（带路由参数 <path:fileName>）
-router.Path("static/<path:fileName>", "静态目录", goi.ViewSet{GET: goi.StaticDirView(http.Dir("public")), })
+router.Path("static/<path:fileName>", "静态目录", goi.ViewSet{GET: goi.StaticDirView(http.Dir("static")), })
 
-// 嵌入式单文件 / 目录
+// 嵌入式单文件
 router.Path("logo.svg", "静态FS文件", goi.ViewSet{GET: goi.StaticFileFSView(assets.LogoFS, "logo.svg"), })
-router.Path("assets/", "静态FS目录", goi.ViewSet{GET: goi.StaticDirFSView(assets.AssetsFS), })
+// 嵌入式目录（带路由参数 <path:fileName>）
+router.Path("assets/<path:fileName>", "静态FS目录", goi.ViewSet{GET: goi.StaticDirFSView(assets.AssetsFS), "assets"})
 ```
 
 ## 中间件

@@ -40,7 +40,7 @@ func init() {
 		// 静态目录
 		basicRouter.StaticDir("static/", "测试静态目录", "static")
 
-		// 静态文件字节切片
+		// embed.FS 静态文件
 		basicRouter.StaticFileFS("test1.txt", "测试静态FS文件", web.Assets, "assets/test.txt")
 
 		// embed.FS 静态目录
@@ -48,12 +48,12 @@ func init() {
 
 		// 自定义方法
 		// 返回文件
-		basicRouter.Path("test_file/", "返回文件", goi.ViewSet{GET: TestFile})
+		basicRouter.Path("test_file", "返回文件", goi.ViewSet{GET: TestFile})
 
 		// 异常处理
-		basicRouter.Path("test_panic/", "异常处理", goi.ViewSet{GET: TestPanic})
+		basicRouter.Path("test_panic", "异常处理", goi.ViewSet{GET: TestPanic})
 
 		// 缓存
-		basicRouter.Path("cache/", "测试缓存", goi.ViewSet{GET: TestCacheGet, POST: TestCacheSet, DELETE: TestCacheDel})
+		basicRouter.Path("cache", "测试缓存", goi.ViewSet{GET: TestCacheGet, POST: TestCacheSet, DELETE: TestCacheDel})
 	}
 }

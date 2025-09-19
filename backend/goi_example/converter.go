@@ -13,6 +13,7 @@ func init() {
 	goi.RegisterConverter("phone", phoneConverter)
 	// ObjectId
 	goi.RegisterConverter("object_id", objectIdConverter)
+	// 捕获所有页面
 	goi.RegisterConverter("index", indexConverter)
 }
 

@@ -17,14 +17,14 @@ func init() {
 // 根命令
 var RootCmd = &cobra.Command{
 	Use:   "goi_example",
-	Short: `goi 示例项目`,
+	Short: `Goi 示例项目`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		server.Start()
 		return nil
 	},
 }
 
-var Help = `goi 示例项目
+var Help = `Goi 示例项目
 `
 
 // help

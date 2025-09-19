@@ -16,6 +16,7 @@ func init() {
 func InitIndexPage() {
 	// 前端页面
 	Server.Router.StaticDirFS("assets", "资源文件", web.Assets, "assets")
-	Server.Router.StaticFileFS("favicon.svg", "访问页面", web.Favicon, "favicon.svg")
+	Server.Router.StaticFileFS("favicon.svg", "favicon", web.Favicon, "favicon.svg")
+	// 首页 <index:path> 为路由参数，匹配任意路径，兼容单页应用
 	Server.Router.StaticFileFS("<index:path>", "访问页面", web.IndexHtml, "index.html")
 }

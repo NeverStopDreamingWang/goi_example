@@ -223,7 +223,7 @@ func TestContextParams(request *goi.Request) interface{} {
 
 // 返回文件
 func TestFile(request *goi.Request) interface{} {
-	absolutePath := filepath.Join(goi.Settings.BASE_DIR, "template/test.txt")
+	absolutePath := filepath.Join(goi.Settings.BASE_DIR, "static/test.txt")
 	file, err := os.Open(absolutePath)
 	if err != nil {
 		_ = file.Close()

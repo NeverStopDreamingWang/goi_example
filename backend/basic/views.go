@@ -21,51 +21,6 @@ func Test1(request *goi.Request) interface{} {
 	}
 }
 
-// query 查询字符串传参
-func TestQueryParams(request *goi.Request) interface{} {
-	var name string
-	var queryParams goi.Params
-	var validationErr goi.ValidationError
-	queryParams = request.QueryParams()
-
-	validationErr = queryParams.Get("name", name)
-	if validationErr != nil {
-		return validationErr.Response()
-	}
-	msg := fmt.Sprintf("参数: %v 参数类型:  %T", name, name)
-	goi.Log.Debug("TestQueryParams", msg)
-
-	return goi.Response{
-		Status: http.StatusOK, // 返回响应状态码
-		Data: goi.Data{ // 响应数据
-			Code:    http.StatusOK, // 返回自定义状态码
-			Message: msg,
-			Results: "",
-		},
-	}
-}
-
-// body 请求体传参
-func TestBodyParams(request *goi.Request) interface{} {
-	var name string
-	var bodyParams goi.Params
-	var validationErr goi.ValidationError
-	bodyParams = request.BodyParams()
-
-	validationErr = bodyParams.Get("name", name)
-	if validationErr != nil {
-		return validationErr.Response()
-	}
-	msg := fmt.Sprintf("参数: %v 参数类型:  %T", name, name)
-	goi.Log.Debug("TestBodyParams", msg)
-
-	return goi.Data{
-		Code:    http.StatusOK,
-		Message: msg,
-		Results: "",
-	}
-}
-
 // 路由传参
 func TestPathParams(request *goi.Request) interface{} {
 	var name string
@@ -74,13 +29,83 @@ func TestPathParams(request *goi.Request) interface{} {
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-	msg := fmt.Sprintf("参数: %v 参数类型:  %T", name, name)
-	goi.Log.Debug("TestPathParams", msg)
+	goi.Log.DebugF("TestPathParams 参数: %v 参数类型: %T", name, name)
 
 	return goi.Data{
 		Code:    http.StatusOK,
-		Message: msg,
-		Results: "",
+		Message: "",
+		Results: name,
+	}
+}
+
+type testQueryParamsValidParams struct {
+	Name string `name:"name" type:"string" required:"true"`
+	Age  *int64 `name:"age" type:"int"`
+}
+
+// query 查询字符串传参
+func TestQueryParams(request *goi.Request) interface{} {
+	var params testQueryParamsValidParams
+	var queryParams goi.Params
+	var validationErr goi.ValidationError
+	queryParams = request.QueryParams()
+
+	// 获取一个参数
+	var name string
+	validationErr = queryParams.Get("name", &name)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+	goi.Log.DebugF("TestQueryParams 参数: %v 参数类型: %T", name, name)
+
+	// 获取多个参数
+	validationErr = queryParams.ParseParams(&params)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+	goi.Log.DebugF("TestQueryParams 参数: %+v 参数类型: %T", params, params)
+
+	return goi.Response{
+		Status: http.StatusOK, // 返回响应状态码
+		Data: goi.Data{ // 响应数据
+			Code:    http.StatusOK, // 返回自定义状态码
+			Message: "",
+			Results: params,
+		},
+	}
+}
+
+type testBodyParamsValidParams struct {
+	Name *string `name:"name" type:"string" required:"true"`
+	Age  *int64  `name:"age" type:"int"`
+}
+
+// body 请求体传参
+func TestBodyParams(request *goi.Request) interface{} {
+	var bodyParams goi.Params
+	var validationErr goi.ValidationError
+	bodyParams = request.BodyParams()
+
+	// 获取一个参数
+	var name string
+	validationErr = bodyParams.Get("name", &name)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+	goi.Log.Debug("TestBodyParams 参数: %v 参数类型: %T", name, name)
+
+	// 获取多个参数
+	var params testBodyParamsValidParams
+	validationErr = bodyParams.ParseParams(&params)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+	goi.Log.Debug("TestBodyParams 参数: %+v 参数类型: %T", params, params)
+
+	return goi.Data{
+		Code:    http.StatusOK,
+		Message: "",
+		Results: params,
 	}
 }
 
@@ -88,9 +113,9 @@ func TestPathParams(request *goi.Request) interface{} {
 type testParamsValidParams struct {
 	Username string            `name:"username" type:"string" required:"true"`
 	Password string            `name:"password" type:"string" required:"true"`
-	Age      string            `name:"age" type:"int" required:"true"`
+	Age      int64             `name:"age" type:"int" required:"true"`
 	Phone    string            `name:"phone" type:"phone" required:"true"`
-	Args     []string          `name:"args" type:"slice"`
+	Args     []int64           `name:"args" type:"slice"`
 	Kwargs   map[string]string `name:"kwargs" type:"map"`
 }
 
@@ -125,8 +150,8 @@ func TestParamsValid(request *goi.Request) interface{} {
 
 	return goi.Data{
 		Code:    http.StatusOK,
-		Message: "ok",
-		Results: nil,
+		Message: "",
+		Results: params,
 	}
 }
 
@@ -137,14 +162,12 @@ func TestConverterParamsStr(request *goi.Request) interface{} {
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-
-	msg := fmt.Sprintf("参数: %v 参数类型:  %T", name, name)
-	goi.Log.Debug("TestConverterParamsStr", msg)
+	goi.Log.DebugF("TestConverterParamsStr 参数: %v 参数类型:  %T", name, name)
 
 	return goi.Data{
 		Code:    http.StatusOK,
-		Message: "ok",
-		Results: msg,
+		Message: "",
+		Results: name,
 	}
 }
 
@@ -156,12 +179,13 @@ func TestConverterParamsPhone(request *goi.Request) interface{} {
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-	resp := map[string]interface{}{
-		"status": http.StatusOK,
-		"msg":    phone,
-		"data":   "OK",
+	goi.Log.DebugF("TestConverterParamsPhone 参数: %v 参数类型:  %T", phone, phone)
+
+	return goi.Data{
+		Code:    http.StatusOK,
+		Message: "",
+		Results: phone,
 	}
-	return resp
 }
 
 // 上下文

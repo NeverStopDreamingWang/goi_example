@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.7
 
 require (
-	github.com/NeverStopDreamingWang/goi v1.6.0
+	github.com/NeverStopDreamingWang/goi v1.6.2
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/redis/go-redis/v9 v9.13.0
 	github.com/spf13/cobra v1.10.1

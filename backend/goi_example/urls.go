@@ -15,7 +15,7 @@ func init() {
 
 func InitIndexPage() {
 	// 前端页面
-	Server.Router.StaticFileFS("favicon.svg", "访问页面", web.Favicon)
+	Server.Router.StaticFileFS("favicon.svg", "访问页面", web.Favicon, "favicon.svg")
 	Server.Router.StaticDirFS("assets", "资源文件", web.Assets)
 	Server.Router.Path("<index:path>", "访问页面", goi.ViewSet{GET: indexView})
 }

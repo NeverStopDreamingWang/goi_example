@@ -2,8 +2,6 @@ module goi_example
 
 go 1.24.0
 
-toolchain go1.24.7
-
 require (
 	github.com/NeverStopDreamingWang/goi v1.6.3
 	github.com/mojocn/base64Captcha v1.3.8

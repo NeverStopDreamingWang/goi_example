@@ -12,7 +12,7 @@ import (
 )
 
 func Test1(request *goi.Request) interface{} {
-	fmt.Println("Test1")
+	goi.Log.DebugF("Test1")
 
 	return map[string]interface{}{
 		"status": http.StatusOK,

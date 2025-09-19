@@ -44,7 +44,7 @@ func init() {
 		basicRouter.StaticFileFS("test1.txt", "测试静态FS文件", web.Assets, "assets/test.txt")
 
 		// embed.FS 静态目录
-		basicRouter.StaticDirFS("assets/", "测试静态FS目录", web.Assets)
+		basicRouter.StaticDirFS("assets/", "测试静态FS目录", web.Assets, "assets")
 
 		// 自定义方法
 		// 返回文件

@@ -116,15 +116,15 @@ go run main.go
     * `path` 路由
     * `desc` 描述
     * `view` 视图 `ViewSet` 类型
-      * `GET` `HandlerFunc`
-      * `HEAD`    `HandlerFunc`
-      * `POST`    `HandlerFunc`
-      * `PUT`     `HandlerFunc`
-      * `PATCH`   `HandlerFunc`
-      * `DELETE`  `HandlerFunc`
-      * `CONNECT` `HandlerFunc`
-      * `OPTIONS` `HandlerFunc`
-      * `TRACE`   `HandlerFunc`
+        * `GET` `HandlerFunc`
+        * `HEAD`    `HandlerFunc`
+        * `POST`    `HandlerFunc`
+        * `PUT`     `HandlerFunc`
+        * `PATCH`   `HandlerFunc`
+        * `DELETE`  `HandlerFunc`
+        * `CONNECT` `HandlerFunc`
+        * `OPTIONS` `HandlerFunc`
+        * `TRACE`   `HandlerFunc`
 
 ### 静态路由
 
@@ -148,13 +148,17 @@ go run main.go
     * `path` 路由
     * `desc` 描述
     * `fileFS` 嵌入文件路径，支持`相对路径`和`绝对路径`
-    * `defaultPath` 默认文件路径
+    * `defaultPath` 嵌入文件默认路径
 
 
-* `Router.StaticDirFS(path string, desc string, dirFS embed.FS)` 注册 `embed.FS` 静态目录路由
+* `Router.StaticDirFS(path string, desc string, dirFS embed.FS, basePath string)` 注册 `embed.FS` 静态目录路由
     * `path` 路由
     * `desc` 描述
     * `dirFS` 嵌入目录路径，支持`相对路径`和`绝对路径`
+    * `basePath` 嵌入文件基础路径
+    * 说明:
+        - `path` 路径之后自动添加 `/<path:fileName>` 参数
+        - 会自动拼接 `basePath` + `fileName` 为嵌入文件查找路径
 
 ### 静态 View 生成器
 

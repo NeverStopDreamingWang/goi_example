@@ -61,7 +61,6 @@ func newDefaultLog() *goi.MetaLogger {
 		Name: "默认日志",
 		Path: OutPath,
 		Level: []goi.Level{ // 所有等级的日志
-			goi.DEBUG,
 			goi.INFO,
 			goi.WARNING,
 			goi.ERROR,
@@ -70,10 +69,10 @@ func newDefaultLog() *goi.MetaLogger {
 		File:            nil,
 		LoggerPrint:     LogPrintln, // 日志输出格式
 		CreateTime:      goi.GetTime(),
-		SPLIT_SIZE:      1024 * 1024 * 20, // 切割大小
-		SPLIT_TIME:      "2006-01-02",     // 切割日期，每天
-		GetFileFunc:     getFileFunc,      // 创建文件对象方法
-		SplitLoggerFunc: nil,              // 自定义日志切割：符合切割条件时，传入日志对象，返回新的文件对象
+		SPLIT_SIZE:      1024 * 1024 * 2, // 切割大小
+		SPLIT_TIME:      "2006-01-02",    // 切割日期，每天
+		GetFileFunc:     getFileFunc,     // 创建文件对象方法
+		SplitLoggerFunc: nil,             // 自定义日志切割：符合切割条件时，传入日志对象，返回新的文件对象
 	}
 	defaultLog.File, err = getFileFunc(defaultLog.Path)
 	if err != nil {

@@ -9,7 +9,7 @@ WEB_PATH=$(BASE_PAH)/frontend
 SERVER_PATH=$(BASE_PAH)/server
 
 BUILD_PATH = $(BASE_PAH)/build
-APP_NAME=example
+APP_NAME=goi_example
 
 build_frontend:
 	cd $(WEB_PATH) && npm install && npm run build:pro

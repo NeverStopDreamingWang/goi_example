@@ -92,7 +92,7 @@ func TestBodyParams(request *goi.Request) interface{} {
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-	goi.Log.Debug("TestBodyParams 参数: %v 参数类型: %T", name, name)
+	goi.Log.DebugF("TestBodyParams 参数: %v 参数类型: %T", name, name)
 
 	// 获取多个参数
 	var params testBodyParamsValidParams
@@ -100,7 +100,7 @@ func TestBodyParams(request *goi.Request) interface{} {
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-	goi.Log.Debug("TestBodyParams 参数: %+v 参数类型: %T", params, params)
+	goi.Log.DebugF("TestBodyParams 参数: %+v 参数类型: %T", params, params)
 
 	return goi.Data{
 		Code:    http.StatusOK,

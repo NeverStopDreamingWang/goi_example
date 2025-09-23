@@ -1,0 +1,19 @@
+
+[Unit]
+Description=goi_example
+After=syslog.target network.target
+
+[Service]
+WorkingDirectory=/opt/goi_example
+ExecStart=/usr/bin/goi_example
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=2
+LimitNOFILE=1048576
+LimitNPROC=1048576
+LimitCORE=1048576
+Delegate=yes
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

@@ -13,8 +13,6 @@ func init() {
 	goi.RegisterConverter("phone", phoneConverter)
 	// ObjectId
 	goi.RegisterConverter("object_id", objectIdConverter)
-	// 捕获所有页面
-	goi.RegisterConverter("index", indexConverter)
 }
 
 // 手机号
@@ -33,10 +31,4 @@ var objectIdConverter = goi.Converter{
 		}
 		return objectId, nil
 	},
-}
-
-// index
-var indexConverter = goi.Converter{
-	Regex: `(.*)`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
 }

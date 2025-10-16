@@ -9,14 +9,17 @@ import (
 var ApiRouter *goi.MetaRouter
 
 func init() {
+	// 前端页面
+	Server.Router.StaticFileFS("", "访问页面", web.IndexHtml, "index.html")
+	Server.Router.StaticFileFS("favicon.svg", "favicon", web.Favicon, "favicon.svg")
+	Server.Router.StaticDirFS("assets", "资源文件", web.Assets, "assets")
+
+	// 未匹配路由，返回首页兼容单页应用
+	Server.Router.NoRoute(goi.ViewSet{
+		HEAD: goi.StaticFileFSView(web.IndexHtml, "index.html"),
+		GET:  goi.StaticFileFSView(web.IndexHtml, "index.html"),
+	})
+
 	Server.Router.StaticDir("static/", "静态目录", "static")
 	ApiRouter = Server.Router.Include("api/", "API")
-}
-
-func InitIndexPage() {
-	// 前端页面
-	Server.Router.StaticDirFS("assets", "资源文件", web.Assets, "assets")
-	Server.Router.StaticFileFS("favicon.svg", "favicon", web.Favicon, "favicon.svg")
-	// 首页 <index:path> 为路由参数，匹配任意路径，兼容单页应用
-	Server.Router.StaticFileFS("<index:path>", "访问页面", web.IndexHtml, "index.html")
 }

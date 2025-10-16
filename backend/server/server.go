@@ -26,9 +26,6 @@ import (
 func Start() {
 	goi_example.SSLinit()
 
-	// 首页
-	goi_example.InitIndexPage()
-
 	// 获取所有路径信息
 	fmt.Println("Route:")
 	route := goi_example.Server.Router.GetRoute()

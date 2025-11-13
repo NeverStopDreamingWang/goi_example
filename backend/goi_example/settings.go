@@ -1,6 +1,7 @@
 package goi_example
 
 import (
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,7 +13,10 @@ import (
 	"goi_example/backend/utils/sqlite3_db"
 
 	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/middleware"
+	"github.com/NeverStopDreamingWang/goi/middleware/clickjacking"
+	"github.com/NeverStopDreamingWang/goi/middleware/common"
+	"github.com/NeverStopDreamingWang/goi/middleware/corsheaders"
+	"github.com/NeverStopDreamingWang/goi/middleware/security"
 )
 
 // Http 服务
@@ -31,21 +35,24 @@ func init() {
 	// version := goi.Version() // 获取版本信息
 	// fmt.Println("goi 版本", version)
 
-	// 注册中间件
-	Server.MiddleWare = []goi.MiddleWare{
-		&middleware.SecurityMiddleWare{},
-		&middleware.CommonMiddleWare{},
-		&middleware.XFrameMiddleWare{},
-	}
-
 	// 项目路径
 	Server.Settings.BASE_DIR, _ = os.Getwd()
+
+	// 加载 Config 配置
+	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
+
+	Config = &ConfigModel{}
+	err = utils.LoadYaml(configPath, Config)
+	if err != nil {
+		panic(err)
+	}
+
 	// 网络协议
 	Server.Settings.NET_WORK = "tcp" // 默认 "tcp" 常用网络协议 "tcp"、"tcp4"、"tcp6"、"udp"、"udp4"、"udp6
 	// 监听地址
-	Server.Settings.BIND_ADDRESS = "0.0.0.0" // 默认 127.0.0.1
+	Server.Settings.BIND_ADDRESS = "0.0.0.0" // 默认 0.0.0.0
 	// 端口
-	Server.Settings.PORT = 8080
+	Server.Settings.PORT = Config.Port
 	// 域名
 	Server.Settings.BIND_DOMAIN = ""
 
@@ -102,13 +109,37 @@ BwIDAQAB
 		KEY_PATH:  filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.key"),
 	}
 
-	// 加载 Config 配置
-	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
-
-	Config = &ConfigModel{}
-	err = utils.LoadYaml(configPath, Config)
-	if err != nil {
-		panic(err)
+	// 注册中间件
+	Server.MiddleWare = []goi.MiddleWare{
+		security.Default(), // 安全中间件
+		common.Default(),   // 通用中间件
+		corsheaders.CorsMiddleWare{ // CORS 跨域中间件
+			CORS_ALLOW_ALL_ORIGINS:      Config.Debug,
+			CORS_ALLOWED_ORIGINS:        Config.CorsAllowOrigins,
+			CORS_ALLOWED_ORIGIN_REGEXES: []string{},
+			CORS_ALLOW_CREDENTIALS:      false,
+			CORS_EXPOSE_HEADERS:         []string{},
+			CORS_ALLOW_HEADERS: []string{
+				"Accept",
+				"Accept-Language",
+				"Content-Language",
+				"Content-Type",
+				"Authorization",
+			},
+			CORS_ALLOW_METHODS: []string{
+				http.MethodGet,
+				http.MethodHead,
+				http.MethodPost,
+				http.MethodPut,
+				http.MethodPatch,
+				http.MethodDelete,
+				http.MethodOptions,
+			},
+			CORS_PREFLIGHT_MAX_AGE:     0,
+			CORS_URLS_REGEX:            "^.*$",
+			CORS_ALLOW_PRIVATE_NETWORK: false,
+		},
+		clickjacking.Default(), // 点击劫持中间件
 	}
 
 	if Config.SQLite3Config != nil {
@@ -147,11 +178,7 @@ BwIDAQAB
 	Server.Cache.MAX_SIZE = 1024 * 1024 * 20      // 单位为字节，0 为不限制使用
 
 	// 日志 DEBUG 设置
-	// 日志 DEBUG 设置
-	Server.Log.DEBUG = false
-	if Config.Debug != nil {
-		Server.Log.DEBUG = *Config.Debug
-	}
+	Server.Log.DEBUG = Config.Debug
 	// 注册日志
 	defaultLog := newDefaultLog() // 默认日志
 	err = Server.Log.RegisterLogger(defaultLog)

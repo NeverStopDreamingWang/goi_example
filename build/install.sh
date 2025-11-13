@@ -20,6 +20,8 @@ function check_root() {
 function Install() {
     log "开始安装 ${SERVICE_NAME}..."
 
+    chmod +x ./${SYSTEM_BIN}
+
     if [[ ! -e /usr/bin/${SYSTEM_BIN} ]]; then
         ln -sf ${BASE_DIR}/${SYSTEM_BIN} /usr/bin/${SYSTEM_BIN} || {
             log "错误: 无法创建软链接"

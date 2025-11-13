@@ -13,7 +13,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-func SSLinit() {
+func init() {
 	SSLPath := filepath.Join(Server.Settings.BASE_DIR, "ssl")
 	if Server.Settings.SSL.STATUS == false {
 		return

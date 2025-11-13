@@ -1,5 +1,9 @@
 debug: true
 port: 8080
+cors_allow_origins:
+  - "http://127.0.0.1"
+  - "https://127.0.0.1"
+
 sqlite3:
   uri: "goi_example.db"
 

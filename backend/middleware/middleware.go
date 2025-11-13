@@ -61,7 +61,7 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) interface{} {
 	}
 
 	payloads := &utils.Payloads{}
-	err := jwt.CkeckToken(token, goi.Settings.SECRET_KEY, payloads)
+	err := jwt.CheckToken(token, goi.Settings.SECRET_KEY, payloads)
 	if err != nil {
 		if errors.Is(err, jwt.ErrDecode) { // token 解码错误
 			return goi.Data{

@@ -2,15 +2,7 @@ package utils
 
 import (
 	"reflect"
-
-	"github.com/NeverStopDreamingWang/goi/jwt"
 )
-
-type Payloads struct {
-	jwt.Payloads
-	User_id  int64  `json:"user_id"`
-	Username string `json:"username"`
-}
 
 func Update(instance interface{}, validated_data interface{}) {
 	instanceValue := reflect.ValueOf(instance)

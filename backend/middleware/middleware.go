@@ -11,7 +11,7 @@ import (
 	"goi_example/backend/utils"
 
 	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func init() {
@@ -61,15 +61,15 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) interface{} {
 	}
 
 	payloads := &utils.Payloads{}
-	err := jwt.CheckToken(token, goi.Settings.SECRET_KEY, payloads)
+	err := utils.CheckToken(token, goi.Settings.SECRET_KEY, payloads)
 	if err != nil {
-		if errors.Is(err, jwt.ErrDecode) { // token 解码错误
+		if errors.Is(err, jwt.ErrTokenMalformed) {
 			return goi.Data{
 				Code:    http.StatusUnauthorized,
 				Message: "token 解码错误",
 				Results: err,
 			}
-		} else if errors.Is(err, jwt.ErrExpiredSignature) { // token 已过期
+		} else if errors.Is(err, jwt.ErrTokenExpired) {
 			return goi.Data{
 				Code:    http.StatusUnauthorized,
 				Message: "token 已过期",

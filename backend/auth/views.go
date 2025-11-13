@@ -15,7 +15,6 @@ import (
 
 	"github.com/NeverStopDreamingWang/goi/auth"
 	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/jwt"
 )
 
 func captchaView(request *goi.Request) interface{} {
@@ -123,22 +122,12 @@ func loginView(request *goi.Request) interface{} {
 		}
 	}
 
-	header := jwt.Header{
-		Alg: jwt.AlgHS256,
-		Typ: jwt.TypJWT,
-	}
-
-	// 设置过期时间
-	twoHoursLater := goi.GetTime().Add(24 * 15 * time.Hour)
-
-	payloads := utils.Payloads{ // 包含 jwt.Payloads
-		Payloads: jwt.Payloads{
-			Exp: jwt.ExpTime{twoHoursLater},
-		},
+	payload := utils.Payloads{ // 包含 jwt.Payloads
+		Exp:      time.Now().In(goi.GetLocation()).Add(time.Hour * 2).Unix(), // 设置过期时间为2小时后
 		User_id:  *userInfo.Id,
 		Username: *userInfo.Username,
 	}
-	token, err := jwt.NewJWT(header, payloads, goi.Settings.SECRET_KEY)
+	token, err := utils.NewToken(payload, goi.Settings.SECRET_KEY)
 	if err != nil {
 		goi.Log.Error("生成 Token 错误", err.Error())
 		return goi.Data{

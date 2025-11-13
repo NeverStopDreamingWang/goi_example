@@ -122,7 +122,7 @@ func loginView(request *goi.Request) interface{} {
 		}
 	}
 
-	payload := utils.Payloads{ // 包含 jwt.Payloads
+	payload := utils.Payloads{
 		Exp:      time.Now().In(goi.GetLocation()).Add(2 * time.Hour).Unix(), // 设置过期时间为2小时后
 		User_id:  *userInfo.Id,
 		Username: *userInfo.Username,

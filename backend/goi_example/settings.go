@@ -209,24 +209,17 @@ BwIDAQAB
 	}
 
 	// 注册关闭回调处理程序
-	Server.RegisterShutdownHandler("关闭操作", Shutdown)
+	shutdown := &Shutdown{}
+	goi.RegisterOnShutdown(shutdown)
 }
 
-func Shutdown(engine *goi.Engine) error {
-	var err error
+type Shutdown struct{}
 
-	if redis_db.Config != nil {
-		err = redis_db.Close()
-		if err != nil {
-			return err
-		}
-	}
+func (self Shutdown) Name() string {
+	return "关闭自定义数据库连接"
+}
 
-	if mongo_db.Config != nil {
-		err = mongo_db.Close()
-		if err != nil {
-			return err
-		}
-	}
+func (self *Shutdown) OnShutdown() error {
+	goi.Log.Info("关闭操作")
 	return nil
 }

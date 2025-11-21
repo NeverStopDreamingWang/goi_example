@@ -1,10 +1,13 @@
 package goi_example
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"goi_example/backend/utils"
 	"goi_example/backend/utils/mongo_db"
@@ -103,7 +106,7 @@ BwIDAQAB
 
 	// 设置 SSL
 	Server.Settings.SSL = goi.MetaSSL{
-		STATUS:    false,  // SSL 开关
+		STATUS:    false,      // SSL 开关
 		TYPE:      "自签证书", // 证书类型
 		CERT_PATH: filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.crt"),
 		KEY_PATH:  filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.key"),
@@ -222,4 +225,35 @@ func (self Shutdown) Name() string {
 func (self *Shutdown) OnShutdown() error {
 	goi.Log.Info("关闭操作")
 	return nil
+}
+
+// 后台任务
+func init() {
+	// 注册后台任务，在 RunServer 之前注册，之后注册的任务不会执行
+	// RunServer 内部会启动注册 goroutine 执行任务
+	goi.RegisterOnStartup(&Task{})
+}
+
+type Task struct{}
+
+func (self *Task) Name() string {
+	return "任务名称"
+}
+
+// OnStartup 启动任务
+func (self *Task) OnStartup(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			goi.Log.Info("任务结束")
+			return
+		default:
+			// TODO
+
+			time.Sleep(1 * time.Second)
+		}
+	}
 }

@@ -106,7 +106,7 @@ BwIDAQAB
 
 	// 设置 SSL
 	Server.Settings.SSL = goi.MetaSSL{
-		STATUS:    false,      // SSL 开关
+		STATUS:    false,  // SSL 开关
 		TYPE:      "自签证书", // 证书类型
 		CERT_PATH: filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.crt"),
 		KEY_PATH:  filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.key"),

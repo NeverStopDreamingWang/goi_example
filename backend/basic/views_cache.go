@@ -15,7 +15,7 @@ type testCacheSetParams struct {
 }
 
 // 设置一条数据到缓存
-func TestCacheSet(request *goi.Request) interface{} {
+func TestCacheSet(request *goi.Request) any {
 	var params testCacheSetParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -58,7 +58,7 @@ type cacheKeyParams struct {
 }
 
 // 通过 key 获取缓存
-func TestCacheGet(request *goi.Request) interface{} {
+func TestCacheGet(request *goi.Request) any {
 	var params cacheKeyParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -101,7 +101,7 @@ func TestCacheGet(request *goi.Request) interface{} {
 }
 
 // 通过 key 删除缓存
-func TestCacheDel(request *goi.Request) interface{} {
+func TestCacheDel(request *goi.Request) any {
 	var params cacheKeyParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError

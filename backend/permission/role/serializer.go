@@ -34,8 +34,8 @@ func (self RoleModel) Validate() error {
 
 func (self *RoleModel) Create() error {
 	if self.Create_Time == nil {
-		Create_time := goi.GetTime().Format(time.DateTime)
-		self.Create_Time = &Create_time
+		CreateTime := goi.GetTime().Format(time.DateTime)
+		self.Create_Time = &CreateTime
 	}
 
 	err := sqlite3.Validate(self, true)
@@ -44,7 +44,7 @@ func (self *RoleModel) Create() error {
 	}
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	err = sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...interface{}) error {
+	err = sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
 		result, err := engine.Insert(self)
 		if err != nil {
@@ -72,11 +72,11 @@ func (self *RoleModel) Create() error {
 }
 
 func (self *RoleModel) Update(validated_data *RoleModel) error {
-	Update_time := goi.GetTime().Format(time.DateTime)
-	validated_data.Update_Time = &Update_time
+	UpdateTime := goi.GetTime().Format(time.DateTime)
+	validated_data.Update_Time = &UpdateTime
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...interface{}) error {
+	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
 		_, err := engine.Where("`id` = ?", self.Id).Update(validated_data)
 		if err != nil {
@@ -111,7 +111,7 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 func (self RoleModel) Delete() error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 
-	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...interface{}) error {
+	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
 		_, err := engine.Where("`id` = ?", self.Id).Delete()
 		if err != nil {

@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	goi_example.Server.MiddleWare = append(goi_example.Server.MiddleWare, &AuthMiddleWare{})
+	goi_example.ApiRouter.Use(&AuthMiddleWare{})
 }
 
 // Token
@@ -25,7 +25,7 @@ type authValidParams struct {
 
 type AuthMiddleWare struct{}
 
-func (AuthMiddleWare) ProcessRequest(request *goi.Request) interface{} {
+func (AuthMiddleWare) ProcessRequest(request *goi.Request) any {
 	// fmt.Println("请求中间件", request.Object.URL)
 
 	// 跳过验证
@@ -82,7 +82,7 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) interface{} {
 			Results: err,
 		}
 	}
-	userInfo, err := user.GetUser(payloads.User_id)
+	userInfo, err := user.GetUser(payloads.UserId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return goi.Data{
@@ -111,8 +111,8 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) interface{} {
 	return nil
 }
 
-func (AuthMiddleWare) ProcessView(request *goi.Request) interface{} { return nil }
+func (AuthMiddleWare) ProcessView(request *goi.Request) any { return nil }
 
-func (AuthMiddleWare) ProcessException(request *goi.Request, exception any) interface{} { return nil }
+func (AuthMiddleWare) ProcessException(request *goi.Request, exception any) any { return nil }
 
 func (AuthMiddleWare) ProcessResponse(request *goi.Request, response *goi.Response) {}

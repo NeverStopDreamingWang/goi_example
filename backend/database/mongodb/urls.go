@@ -1,8 +1,9 @@
 package mongodb
 
 import (
-	"github.com/NeverStopDreamingWang/goi"
 	"goi_example/backend/database"
+
+	"github.com/NeverStopDreamingWang/goi"
 )
 
 func init() {

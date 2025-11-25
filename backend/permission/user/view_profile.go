@@ -14,27 +14,27 @@ import (
 )
 
 type userMenuList struct {
-	Id        *int64          `json:"id"`
-	Parent_id *int64          `json:"parent_id"`
-	Name      *string         `json:"label"`
-	Icon      *string         `json:"icon"`
-	Path      *string         `json:"index"`
-	Children  []*userMenuList `json:"children"`
+	Id       *int64          `json:"id"`
+	ParentId *int64          `json:"parent_id"`
+	Name     *string         `json:"label"`
+	Icon     *string         `json:"icon"`
+	Path     *string         `json:"index"`
+	Children []*userMenuList `json:"children"`
 }
 type profileUser struct {
-	Id              *int64          `json:"id"`
-	Username        *string         `json:"username"`
-	Email           *string         `json:"email"`
-	Status          *UserStatusType `json:"status"`
-	Role_id         *int64          `json:"role_id"`
-	Last_login_time *string         `json:"last_login_time"`
-	Create_time     *string         `json:"create_time"`
-	Update_time     *string         `json:"update_time"`
-	Role            *role.RoleModel `json:"role"`
-	Menu_List       []*userMenuList `json:"menu_list"`
+	Id            *int64          `json:"id"`
+	Username      *string         `json:"username"`
+	Email         *string         `json:"email"`
+	Status        *UserStatusType `json:"status"`
+	RoleId        *int64          `json:"role_id"`
+	LastLoginTime *string         `json:"last_login_time"`
+	CreateTime    *string         `json:"create_time"`
+	UpdateTime    *string         `json:"update_time"`
+	Role          *role.RoleModel `json:"role"`
+	Menu_List     []*userMenuList `json:"menu_list"`
 }
 
-func profileRetrieveView(request *goi.Request) interface{} {
+func profileRetrieveView(request *goi.Request) any {
 	// 获取当前用户信息
 	var userObject UserModel
 	validationErr := request.Params.Get("user", &userObject)
@@ -63,7 +63,7 @@ func profileRetrieveView(request *goi.Request) interface{} {
 
 	user.Role = &role.RoleModel{}
 	sqlite3DB.SetModel(role.RoleModel{})
-	err = sqlite3DB.Where("`id` = ?", user.Role_id).First(user.Role)
+	err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return goi.Data{
@@ -81,7 +81,7 @@ func profileRetrieveView(request *goi.Request) interface{} {
 
 	roleMenuList := []role.RoleMenuModel{}
 	sqlite3DB.SetModel(role.RoleMenuModel{})
-	err = sqlite3DB.Where("role_id = ?", user.Role_id).Select(&roleMenuList)
+	err = sqlite3DB.Where("role_id = ?", user.RoleId).Select(&roleMenuList)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -121,7 +121,7 @@ type profileUpdateValidParams struct {
 	Email       *string `name:"email" type:"string"`
 }
 
-func profileUpdateView(request *goi.Request) interface{} {
+func profileUpdateView(request *goi.Request) any {
 	var params profileUpdateValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError

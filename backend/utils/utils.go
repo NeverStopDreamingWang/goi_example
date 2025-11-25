@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-func Update(instance interface{}, validated_data interface{}) {
+func Update(instance any, validated_data any) {
 	instanceValue := reflect.ValueOf(instance)
 	validatedDataValue := reflect.ValueOf(validated_data)
 

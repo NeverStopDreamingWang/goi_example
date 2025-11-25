@@ -10,18 +10,18 @@ import (
 
 func init() {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	sqlite3DB.Migrate("goi_example", MenuModel{})     // 菜单表
-	sqlite3DB.Migrate("goi_example", RoleMenuModel{}) // 角色-菜单表
-	sqlite3DB.Migrate("goi_example", RoleModel{})     // 角色表
+	sqlite3DB.Migrate(MenuModel{})     // 菜单表
+	sqlite3DB.Migrate(RoleMenuModel{}) // 角色-菜单表
+	sqlite3DB.Migrate(RoleModel{})     // 角色表
 }
 
 // 菜单表
 type MenuModel struct {
-	Id        *int64  `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"` // ID
-	Parent_id *int64  `field_name:"parent_id" field_type:"INTEGER" json:"parent_id"`                      // 父级
-	Name      *string `field_name:"name" field_type:"TEXT NOT NULL" json:"name"`                          // 名称
-	Icon      *string `field_name:"icon" field_type:"TEXT" json:"icon"`                                   // 图标
-	Path      *string `field_name:"path" field_type:"TEXT NOT NULL" json:"path"`                          // 路由
+	Id       *int64  `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"` // ID
+	ParentId *int64  `field_name:"parent_id" field_type:"INTEGER" json:"parent_id"`                      // 父级
+	Name     *string `field_name:"name" field_type:"TEXT NOT NULL" json:"name"`                          // 名称
+	Icon     *string `field_name:"icon" field_type:"TEXT" json:"icon"`                                   // 图标
+	Path     *string `field_name:"path" field_type:"TEXT NOT NULL" json:"path"`                          // 路由
 }
 
 func (MenuModel) ModelSet() *sqlite3.Settings {
@@ -41,7 +41,7 @@ func (MenuModel) ModelSet() *sqlite3.Settings {
 
 // 初始化菜单
 func initMenu() error {
-	initMenuList := [][]interface{}{
+	initMenuList := [][]any{
 		{int64(1), nil, "首页", "home", "/home"},
 		{int64(2), int64(1), "仪表盘", "", "dashboard"},
 	}
@@ -73,15 +73,15 @@ func initMenu() error {
 			continue
 		}
 		menu := MenuModel{
-			Id:        &Id,
-			Parent_id: nil,
-			Name:      &Name,
-			Icon:      &Icon,
-			Path:      &Path,
+			Id:       &Id,
+			ParentId: nil,
+			Name:     &Name,
+			Icon:     &Icon,
+			Path:     &Path,
 		}
 		if item[1] != nil {
-			Parent_id := item[1].(int64)
-			menu.Parent_id = &Parent_id
+			ParentId := item[1].(int64)
+			menu.ParentId = &ParentId
 		}
 		sqlite3DB.SetModel(MenuModel{})
 		_, err = sqlite3DB.Insert(&menu)
@@ -118,7 +118,7 @@ func (RoleModel) ModelSet() *sqlite3.Settings {
 
 // 初始化角色
 func initRole() error {
-	initRoleList := [][]interface{}{
+	initRoleList := [][]any{
 		{int64(1), "超级管理员"},
 	}
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")

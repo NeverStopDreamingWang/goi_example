@@ -66,7 +66,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-func Ping(request *goi.Request) interface{} {
+func Ping(request *goi.Request) any {
 	goi.Log.DebugF("Test1")
 
 	return goi.Data{
@@ -116,15 +116,16 @@ go run main.go
     * `path` 路由
     * `desc` 描述
     * `view` 视图 `ViewSet` 类型
-        * `GET` `HandlerFunc`
-        * `HEAD`    `HandlerFunc`
-        * `POST`    `HandlerFunc`
-        * `PUT`     `HandlerFunc`
-        * `PATCH`   `HandlerFunc`
-        * `DELETE`  `HandlerFunc`
-        * `CONNECT` `HandlerFunc`
-        * `OPTIONS` `HandlerFunc`
-        * `TRACE`   `HandlerFunc`
+        * `GET`      `HandlerFunc` 获取资源
+        * `HEAD`     `HandlerFunc` 获取响应头
+        * `POST`     `HandlerFunc` 创建资源
+        * `PUT`      `HandlerFunc` 更新资源
+        * `PATCH`    `HandlerFunc` 部分更新
+        * `DELETE`   `HandlerFunc` 删除资源
+        * `CONNECT`  `HandlerFunc` 建立隧道
+        * `OPTIONS`  `HandlerFunc` 查询支持的方法
+        * `TRACE`    `HandlerFunc` 回显请求
+        * `NoMethod` `HandlerFunc` 未注册或不支持的HTTP方法时的处理函数，默认返回 405
 
 ### 静态路由
 
@@ -132,7 +133,7 @@ go run main.go
 
 静态路由映射可通过两种方式注册：
 
-方式一：Router.* 辅助方法（内部基于公共 ViewSet 生成器）
+方式一：Router.* 方法（内部基于公共 ViewSet 生成器）
 
 * `Router.StaticFile(path string, desc string, filePath string)` 注册静态文件路由
     * `path` 路由
@@ -189,34 +190,41 @@ router.Path("assets/<path:fileName>", "静态FS目录", goi.ViewSet{GET: goi.Sta
 框架采用接口式中间件，按职责可实现以下任意方法（可选实现）：
 
 ```go
+package goi_test
+
+import (
+	"fmt"
+	"net/http"
+	"runtime/debug"
+)
+
 // 中间件
-// MiddleWare 定义四个阶段钩子：
-// - ProcessRequest：请求阶段（顺序执行）；返回非 nil 则短路，内层不再进入
-// - ProcessView：路由解析后、视图执行前（顺序执行）；返回非 nil 则短路，但响应阶段仍会全链执行
+// MiddleWare 定义中间件接口：
+// - ProcessRequest：请求阶段（顺序执行）；返回 nil 则继续执行，否则直接写入响应返回，内层不再进入
 // - ProcessException：异常阶段（逆序执行）；
-// - ProcessResponse：响应阶段（逆序执行、全链）；常用于追加/修改响应头
+// - ProcessResponse：响应阶段（逆序执行）；常用于追加/修改响应头
 type MiddleWare interface {
-ProcessRequest(*Request) interface{}                // 请求中间件
-ProcessView(*Request) interface{}                   // 视图中间件
-ProcessException(*Request, interface{}) interface{} // 异常中间件
-ProcessResponse(*Request, *Response)                // 响应中间件
+	ProcessRequest(request *Request) any                  // 请求中间件
+	ProcessException(request *Request, exception any) any // 异常中间件
+	ProcessResponse(request *Request, response *Response) // 响应中间件
 }
 ```
 
 注册：
 
 ```go
+package goi_test
+
 func init() {
-example.Server.MiddleWare = append(example.Server.MiddleWare, &MyMiddleware{})
+	goi_example.ApiRouter.Use(&MyMiddleware{})
 }
 ```
 
 执行顺序：
 
-- 请求阶段（ProcessRequest）：正序执行；返回 nil 则继续执行，否则返回结果
-- 视图阶段（ProcessView）：正序执行；返回 nil 则继续执行，否则返回结果
-- 异常阶段（ProcessException）：逆序执行；返回 nil 则继续执行，否则返回结果
-- 响应阶段（ProcessResponse）：逆序执行；可对视图结果进行包装/替换
+- 请求阶段（ProcessRequest）：正序执行；返回 nil 则继续执行，否则直接写入响应返回
+- 异常阶段（ProcessException）：逆序执行；返回 nil 则继续执行，否则直接写入响应返回
+- 响应阶段（ProcessResponse）：逆序执行；常用于追加/修改响应头
 
 异常处理：
 
@@ -230,19 +238,19 @@ example.Server.MiddleWare = append(example.Server.MiddleWare, &MyMiddleware{})
     * 错误日志：`Log.ERROR_OUT_PATH ERROR`
 * **日志等级**：是否开启 `Log.DEBUG = true`
     * DEBUG
-        * 使用：`goi.Debug()`
+        * 使用：`goi.Debug()` / `goi.DebugF()`
         * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志、ERROR 错误日志
     * INFO
-        * 使用：`goi.Info()`
+        * 使用：`goi.Info()` / `goi.InfoF()`
         * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志
     * WARNING
-        * 使用：`goi.Warning()`
+        * 使用：`goi.Warning()` / `goi.WarningF()`
         * 输出：Console（终端）、INFO 信息日志
     * ERROR
-        * 使用：`goi.Error()`
+        * 使用：`goi.Error()` / `goi.ErrorF()`
         * 输出：Console（终端）、INFO 信息日志、ERROR 错误日志
-    * MeteLog
-        * 使用：`goi.MetaLog()`
+    * Log
+        * 使用：`goi.Log()` / `goi.LogF()`
         * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志、ERROR 错误日志
 * **日志切割**：两种可同时设置满足任意一种即切割
     * 按照日志大小：`Log.SplitSize`
@@ -314,49 +322,64 @@ func ExampleMakePassword() {
 package goi_test
 
 import (
+	"errors"
+
 	"github.com/NeverStopDreamingWang/goi"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // 手机号
 var phoneConverter = goi.Converter{
 	Regex: `(1[3456789]\d{9})`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // 邮箱
 var emailConverter = goi.Converter{
 	Regex: `([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // URL
 var urlConverter = goi.Converter{
 	Regex: `(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // 日期 (YYYY-MM-DD)
 var dateConverter = goi.Converter{
 	Regex: `(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // 时间 (HH:MM:SS)
 var timeConverter = goi.Converter{
 	Regex: `((?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d)`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // IP地址 (IPv4)
 var ipv4Converter = goi.Converter{
 	Regex: `((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // 用户名 (字母开头，允许字母数字下划位)
 var usernameConverter = goi.Converter{
 	Regex: `([a-zA-Z][a-zA-Z0-9_]{3,15})`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
+}
+
+// ObjectId
+var objectIdConverter = goi.Converter{
+	Regex: `([a-fA-F0-9]{24})`,
+	ToGo: func(value string) (interface{}, error) {
+		objectId, err := primitive.ObjectIDFromHex(value)
+		if err != nil {
+			return nil, errors.New("ID 错误")
+		}
+		return objectId, nil
+	},
 }
 
 func ExampleRegisterConverter() {
@@ -382,6 +405,9 @@ func ExampleRegisterConverter() {
 
 	// 用户名 (字母开头，允许字母数字下划位)
 	goi.RegisterConverter("my_username", usernameConverter)
+
+	// MongoDB objectId
+	goi.RegisterConverter("object_id", objectIdConverter)
 }
 ```
 
@@ -408,14 +434,14 @@ func init() {
 }
 
 // 测试手机号路由转换器
-func TestPhone(request *goi.Request) interface{} {
+func TestPhone(request *goi.Request) any {
 	var phone string
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("phone", &phone)
 	if validationErr != nil {
 		return validationErr.Response()
 	}
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"status": http.StatusOK,
 		"msg":    phone,
 		"data":   "OK",
@@ -443,12 +469,13 @@ import (
 	"testing"
 
 	"github.com/NeverStopDreamingWang/goi"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // phoneValidator 手机号验证器示例
 type phoneValidator struct{}
 
-func (validator phoneValidator) Validate(value interface{}) goi.ValidationError {
+func (validator phoneValidator) Validate(value any) goi.ValidationError {
 	switch typeValue := value.(type) {
 	case int:
 		valueStr := strconv.Itoa(typeValue)
@@ -469,7 +496,7 @@ func (validator phoneValidator) Validate(value interface{}) goi.ValidationError 
 	return nil
 }
 
-func (validator phoneValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
+func (validator phoneValidator) ToGo(value any) (any, goi.ValidationError) {
 	switch typeValue := value.(type) {
 	case int:
 		return strconv.Itoa(typeValue), nil
@@ -480,10 +507,40 @@ func (validator phoneValidator) ToGo(value interface{}) (interface{}, goi.Valida
 	}
 }
 
+// MongoDB objectId  类型
+type objectIdValidator struct{}
+
+func (validator objectIdValidator) Validate(value interface{}) goi.ValidationError {
+	switch typeValue := value.(type) {
+	case string:
+		var reStr = `^([a-fA-F0-9]{24})$`
+		re := regexp.MustCompile(reStr)
+		if re.MatchString(typeValue) == false {
+			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
+		}
+	default:
+		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
+	}
+	return nil
+}
+
+func (validator objectIdValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
+	switch typeValue := value.(type) {
+	case string:
+		objectId, err := primitive.ObjectIDFromHex(typeValue)
+		if err != nil {
+			return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
+		}
+		return objectId, nil
+	default:
+		return typeValue, nil
+	}
+}
+
 // emailValidator 邮箱验证器示例
 type emailValidator struct{}
 
-func (validator emailValidator) Validate(value interface{}) goi.ValidationError {
+func (validator emailValidator) Validate(value any) goi.ValidationError {
 	switch v := value.(type) {
 	case string:
 		re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
@@ -497,7 +554,7 @@ func (validator emailValidator) Validate(value interface{}) goi.ValidationError 
 }
 
 // 当解析参数值类型与结构体字段类型不一致，且结构体字段类型为自定义类型时，需要实现 ToGo 方法
-func (validator emailValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
+func (validator emailValidator) ToGo(value any) (any, goi.ValidationError) {
 	switch v := value.(type) {
 	case string:
 		// 转换类型，并返回
@@ -521,6 +578,9 @@ type testParamsValidParams struct {
 func ExampleRegisterValidate() {
 	// 注册手机号验证器
 	goi.RegisterValidate("phone", phoneValidator{})
+
+	// MongoDB objectId
+	goi.RegisterValidate("object_id", objectIdValidator{})
 
 	// 注册邮箱验证器
 	goi.RegisterValidate("email", emailValidator{})
@@ -590,7 +650,7 @@ func init() {
 	_, _ = sqliteDB.Execute("DROP TABLE IF EXISTS user_tb")
 
 	// 迁移模型
-	sqliteDB.Migrate("test_db", UserModel{})
+	sqliteDB.Migrate(UserModel{})
 
 	// 插入初始测试数据
 	username := "test_user"
@@ -598,10 +658,10 @@ func init() {
 	now := time.Now().Format(time.DateTime)
 
 	user := UserModel{
-		Username:    &username,
-		Password:    &password,
-		Create_time: &now,
-		Update_time: &now,
+		Username:   &username,
+		Password:   &password,
+		CreateTime: &now,
+		UpdateTime: &now,
 	}
 
 	sqliteDB.SetModel(UserModel{})
@@ -616,11 +676,11 @@ func init() {
 
 // 用户表模型
 type UserModel struct {
-	Id          *int64  `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"`
-	Username    *string `field_name:"username" field_type:"TEXT NOT NULL" json:"username"`
-	Password    *string `field_name:"password" field_type:"TEXT NOT NULL" json:"-"`
-	Create_time *string `field_name:"create_time" field_type:"TEXT NOT NULL" json:"create_time"`
-	Update_time *string `field_name:"update_time" field_type:"TEXT" json:"update_time"`
+	Id         *int64  `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"`
+	Username   *string `field_name:"username" field_type:"TEXT NOT NULL" json:"username"`
+	Password   *string `field_name:"password" field_type:"TEXT NOT NULL" json:"-"`
+	CreateTime *string `field_name:"create_time" field_type:"TEXT NOT NULL" json:"create_time"`
+	UpdateTime *string `field_name:"update_time" field_type:"TEXT" json:"update_time"`
 }
 
 // 设置表配置
@@ -660,11 +720,11 @@ func InitUser() error {
 	)
 
 	user := UserModel{
-		Id:          &id,
-		Username:    &username,
-		Password:    &password,
-		Create_time: &create_Datetime,
-		Update_time: nil,
+		Id:         &id,
+		Username:   &username,
+		Password:   &password,
+		CreateTime: &create_Datetime,
+		UpdateTime: nil,
 	}
 	sqliteDB.SetModel(UserModel{})
 	_, err = sqliteDB.Insert(&user)
@@ -694,9 +754,9 @@ func ExampleEngine_Insert() {
 	now := time.Now().Format(time.DateTime)
 
 	user := UserModel{
-		Username:    &username,
-		Password:    &password,
-		Create_time: &now,
+		Username:   &username,
+		Password:   &password,
+		CreateTime: &now,
 	}
 
 	// 设置模型并插入数据
@@ -754,7 +814,7 @@ func ExampleEngine_Select() {
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 查询多条记录 Select 支持 map 以及 结构体
-	// var users []map[string]interface{}
+	// var users []map[string]any
 	var users []*UserModel
 
 	sqliteDB.SetModel(UserModel{})
@@ -805,7 +865,7 @@ func ExampleEngine_First() {
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 查询单条记录 First 支持 map 以及 结构体
-	// var user map[string]interface{}
+	// var user map[string]any
 	var user *UserModel
 
 	sqliteDB.SetModel(UserModel{})
@@ -826,12 +886,12 @@ func ExampleEngine_Fields() {
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 指定查询字段
-	var user map[string]interface{}
+	var user map[string]any
 
 	sqliteDB.SetModel(UserModel{})
 
 	// Fields 返回当前实例的副本指针
-	sqliteDB = sqliteDB.Fields("Username", "Create_time")
+	sqliteDB = sqliteDB.Fields("Username", "CreateTime")
 	err := sqliteDB.Select(&user)
 	if err != nil {
 		fmt.Println("查询错误:", err)
@@ -977,7 +1037,7 @@ func ExampleEngine_WithTransaction() {
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 事务
-	err := sqliteDB.WithTransaction(func(engine *sqlite3.Engine, args ...interface{}) error {
+	err := sqliteDB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
 		// 准备测试数据
 		username1 := "transaction_user1"
 		username2 := "transaction_user2"
@@ -986,9 +1046,9 @@ func ExampleEngine_WithTransaction() {
 
 		// 插入第一个用户
 		user1 := UserModel{
-			Username:    &username1,
-			Password:    &password,
-			Create_time: &now,
+			Username:   &username1,
+			Password:   &password,
+			CreateTime: &now,
 		}
 		engine.SetModel(UserModel{})
 		_, err := engine.Insert(user1)
@@ -998,9 +1058,9 @@ func ExampleEngine_WithTransaction() {
 
 		// 插入第二个用户
 		user2 := UserModel{
-			Username:    &username2,
-			Password:    &password,
-			Create_time: &now,
+			Username:   &username2,
+			Password:   &password,
+			CreateTime: &now,
 		}
 		_, err = engine.Insert(user2)
 		if err != nil {
@@ -1019,119 +1079,6 @@ func ExampleEngine_WithTransaction() {
 
 	// Output:
 	// 事务执行完成
-}
-
-```
-
-## 内置 JWT Token
-
-```go
-package jwt_test
-
-import (
-	"errors"
-	"fmt"
-	"time"
-
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/jwt"
-)
-
-// 自定义负载结构体
-type CustomPayloads struct {
-	jwt.Payloads        // 嵌入基础 Payloads 结构体
-	User_id      int    `json:"user_id"`
-	Username     string `json:"username"`
-}
-
-func ExampleNewJWT() {
-	// 创建头部信息
-	header := jwt.Header{
-		Alg: jwt.AlgHS256,
-		Typ: jwt.TypJWT,
-	}
-
-	// 创建自定义负载
-	payload := CustomPayloads{
-		Payloads: jwt.Payloads{
-			// 设置过期时间为2小时后
-			Exp: jwt.ExpTime{Time: goi.GetTime().Add(time.Hour * 2)},
-		},
-		User_id:  1,
-		Username: "test_user",
-	}
-
-	// 签名密钥
-	key := "your-secret-key"
-
-	// 生成 JWT 令牌
-	token, err := jwt.NewJWT(header, payload, key)
-	if err != nil {
-		fmt.Println("生成令牌错误:", err)
-		return
-	}
-	fmt.Println("生成的令牌成功")
-
-	// 验证并解析令牌
-	var decodedPayload CustomPayloads
-	err = jwt.CkeckToken(token, key, &decodedPayload)
-	if err != nil {
-		fmt.Println("验证令牌错误:", err)
-		return
-	}
-
-	fmt.Println("解析的用户ID:", decodedPayload.User_id)
-	fmt.Println("解析的用户名:", decodedPayload.Username)
-
-	// Output:
-	// 生成的令牌成功
-	// 解析的用户ID: 1
-	// 解析的用户名: test_user
-}
-
-func ExampleCkeckToken() {
-	// 签名密钥
-	key := "your-secret-key"
-
-	// 创建一个已过期的令牌
-	header := jwt.Header{
-		Alg: jwt.AlgHS256,
-		Typ: jwt.TypJWT,
-	}
-
-	payload := CustomPayloads{
-		Payloads: jwt.Payloads{
-			// 设置过期时间为1小时前
-			Exp: jwt.ExpTime{Time: goi.GetTime().Add(-time.Hour)},
-		},
-		User_id:  1,
-		Username: "test_user",
-	}
-
-	// 生成过期的令牌
-	expiredToken, _ := jwt.NewJWT(header, payload, key)
-
-	// 尝试验证过期的令牌
-	var decodedPayload CustomPayloads
-	err := jwt.CkeckToken(expiredToken, key, &decodedPayload)
-	if errors.Is(err, jwt.ErrExpiredSignature) {
-		fmt.Println("令牌已过期")
-	} else if errors.Is(err, jwt.ErrDecode) {
-		fmt.Println("令牌格式错误")
-	} else if err != nil {
-		fmt.Println("其他错误:", err)
-	}
-
-	// 使用错误的密钥验证令牌
-	wrongKey := "wrong-secret-key"
-	err = jwt.CkeckToken(expiredToken, wrongKey, &decodedPayload)
-	if err == jwt.ErrDecode {
-		fmt.Println("签名验证失败")
-	}
-
-	// Output:
-	// 令牌已过期
-	// 签名验证失败
 }
 
 ```

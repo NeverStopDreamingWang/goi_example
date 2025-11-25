@@ -105,7 +105,7 @@ BwIDAQAB
 `
 
 	// 设置 SSL
-	Server.Settings.SSL = goi.MetaSSL{
+	Server.Settings.SSL = goi.SSL{
 		STATUS:    false,  // SSL 开关
 		TYPE:      "自签证书", // 证书类型
 		CERT_PATH: filepath.Join(Server.Settings.BASE_DIR, "ssl", "goi_example.crt"),
@@ -113,7 +113,7 @@ BwIDAQAB
 	}
 
 	// 注册中间件
-	Server.MiddleWare = []goi.MiddleWare{
+	Server.Router.Use(
 		security.Default(), // 安全中间件
 		common.Default(),   // 通用中间件
 		corsheaders.CorsMiddleWare{ // CORS 跨域中间件
@@ -143,7 +143,7 @@ BwIDAQAB
 			CORS_ALLOW_PRIVATE_NETWORK: false,
 		},
 		clickjacking.Default(), // 点击劫持中间件
-	}
+	)
 
 	if Config.SQLite3Config != nil {
 		sqlite3_db.Config = Config.SQLite3Config
@@ -199,8 +199,8 @@ BwIDAQAB
 	Server.Validator.SetValidationError(validationError{})
 
 	// 设置自定义配置
-	// Server.Settings.Set(key string, value interface{})
-	// Server.Settings.Get(key string, dest interface{})
+	// Server.Settings.Set(key string, value any)
+	// Server.Settings.Get(key string, dest any)
 
 	if Config.RedisConfig != nil {
 		redis_db.Config = Config.RedisConfig

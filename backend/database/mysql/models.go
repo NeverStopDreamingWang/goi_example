@@ -26,14 +26,14 @@ const (
 
 // 用户表
 type UserModel struct {
-	Id              *int64          `field_name:"id" field_type:"BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'ID'" json:"id"`
-	Username        *string         `field_name:"username" field_type:"VARCHAR(255) NOT NULL UNIQUE COMMENT '用户名'" json:"username"`
-	Password        *string         `field_name:"password" field_type:"VARCHAR(255) NOT NULL COMMENT '密码'" json:"-"`
-	Email           *string         `field_name:"email" field_type:"VARCHAR(255) NOT NULL UNIQUE COMMENT '邮箱'" json:"email"`
-	Status          *UserStatusType `field_name:"status" field_type:"SMALLINT unsigned DEFAULT 1 COMMENT '状态'" json:"status"`
-	Last_login_time *string         `field_name:"last_login_time" field_type:"DATETIME DEFAULT NULL COMMENT '最后登录时间'" json:"last_login_time"`
-	Create_time     *string         `field_name:"create_time" field_type:"DATETIME NOT NULL COMMENT '创建时间'" json:"create_time"`
-	Update_time     *string         `field_name:"update_time" field_type:"DATETIME DEFAULT NULL COMMENT '更新时间'" json:"update_time"`
+	Id            *int64          `field_name:"id" field_type:"BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'ID'" json:"id"`
+	Username      *string         `field_name:"username" field_type:"VARCHAR(255) NOT NULL UNIQUE COMMENT '用户名'" json:"username"`
+	Password      *string         `field_name:"password" field_type:"VARCHAR(255) NOT NULL COMMENT '密码'" json:"-"`
+	Email         *string         `field_name:"email" field_type:"VARCHAR(255) NOT NULL UNIQUE COMMENT '邮箱'" json:"email"`
+	Status        *UserStatusType `field_name:"status" field_type:"SMALLINT unsigned DEFAULT 1 COMMENT '状态'" json:"status"`
+	LastLoginTime *string         `field_name:"last_login_time" field_type:"DATETIME DEFAULT NULL COMMENT '最后登录时间'" json:"last_login_time"`
+	CreateTime    *string         `field_name:"create_time" field_type:"DATETIME NOT NULL COMMENT '创建时间'" json:"create_time"`
+	UpdateTime    *string         `field_name:"update_time" field_type:"DATETIME DEFAULT NULL COMMENT '更新时间'" json:"update_time"`
 }
 
 // 设置表配置
@@ -75,7 +75,7 @@ func (userModel UserModel) ModelSet() *mysql.Settings {
 
 // 初始化数据
 func InitUser() error {
-	initUserList := [][]interface{}{
+	initUserList := [][]any{
 		{"admin", "admin", "admin@qq.com", UserStatusType(1)},
 	}
 	var err error

@@ -12,15 +12,15 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page          int             `name:"page" type:"int" required:"true"`
-	Page_Size     int             `name:"page_size" type:"int" required:"true"`
-	Username      *string         `name:"username" type:"string"`
-	Status        *UserStatusType `name:"status" type:"int"`
-	Role_id       *int64          `name:"role_id" type:"int"`
-	Department_id *int64          `name:"department_id" type:"int"`
+	Page         int             `name:"page" type:"int" required:"true"`
+	PageSize     int             `name:"page_size" type:"int" required:"true"`
+	Username     *string         `name:"username" type:"string"`
+	Status       *UserStatusType `name:"status" type:"int"`
+	RoleId       *int64          `name:"role_id" type:"int"`
+	DepartmentId *int64          `name:"department_id" type:"int"`
 }
 
-func listView(request *goi.Request) interface{} {
+func listView(request *goi.Request) any {
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -41,13 +41,13 @@ func listView(request *goi.Request) interface{} {
 	if params.Status != nil {
 		mysqlDB = mysqlDB.Where("`status` = ?", params.Status)
 	}
-	if params.Role_id != nil {
-		mysqlDB = mysqlDB.Where("`role_id` = ?", params.Role_id)
+	if params.RoleId != nil {
+		mysqlDB = mysqlDB.Where("`role_id` = ?", params.RoleId)
 	}
-	if params.Department_id != nil {
-		mysqlDB = mysqlDB.Where("`department_id` = ?", params.Department_id)
+	if params.DepartmentId != nil {
+		mysqlDB = mysqlDB.Where("`department_id` = ?", params.DepartmentId)
 	}
-	total, total_page, err := mysqlDB.Page(params.Page, params.Page_Size)
+	total, total_page, err := mysqlDB.Page(params.Page, params.PageSize)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -69,7 +69,7 @@ func listView(request *goi.Request) interface{} {
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: map[string]interface{}{
+		Results: map[string]any{
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
@@ -86,7 +86,7 @@ type createValidParams struct {
 	Status   UserStatusType `name:"status" type:"int" required:"true"`
 }
 
-func createView(request *goi.Request) interface{} {
+func createView(request *goi.Request) any {
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -130,7 +130,7 @@ func createView(request *goi.Request) interface{} {
 	}
 }
 
-func retrieveView(request *goi.Request) interface{} {
+func retrieveView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -173,7 +173,7 @@ type updateValidParams struct {
 	Status   *UserStatusType `name:"status" type:"int"`
 }
 
-func updateView(request *goi.Request) interface{} {
+func updateView(request *goi.Request) any {
 	var pk int64
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -243,7 +243,7 @@ func updateView(request *goi.Request) interface{} {
 	}
 }
 
-func deleteView(request *goi.Request) interface{} {
+func deleteView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 

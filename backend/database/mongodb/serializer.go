@@ -44,10 +44,10 @@ func (self *DocumentModel) Create() error {
 	self.Id = &id
 
 	// 设置创建时间和更新时间
-	if self.Create_time == nil {
-		Create_time := goi.GetTime().Format(time.DateTime)
-		self.Create_time = &Create_time
-		self.Update_time = &Create_time
+	if self.CreateTime == nil {
+		CreateTime := goi.GetTime().Format(time.DateTime)
+		self.CreateTime = &CreateTime
+		self.UpdateTime = &CreateTime
 	}
 
 	// 将结构体编码为 BSON 格式
@@ -79,8 +79,8 @@ func (self *DocumentModel) Update(validated_data *DocumentModel) error {
 	}
 
 	update_time := goi.GetTime().Format(time.DateTime)
-	validated_data.Update_time = &update_time
-	updateFields["update_time"] = validated_data.Update_time
+	validated_data.UpdateTime = &update_time
+	updateFields["update_time"] = validated_data.UpdateTime
 
 	filter := bson.M{"_id": self.Id}
 

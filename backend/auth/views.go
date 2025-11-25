@@ -17,7 +17,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi/db"
 )
 
-func captchaView(request *goi.Request) interface{} {
+func captchaView(request *goi.Request) any {
 	id, base64Str, err := captcha.NewCaptcha()
 	if err != nil {
 		return goi.Data{
@@ -37,14 +37,14 @@ func captchaView(request *goi.Request) interface{} {
 }
 
 type loginParams struct {
-	Email      *string `name:"email" type:"string"`
-	Username   *string `name:"username" type:"string"`
-	Password   string  `name:"password" type:"string" required:"true"`
-	Captcha_id string  `name:"captcha_id" type:"string"`
-	Captcha    string  `name:"captcha" type:"string"`
+	Email     *string `name:"email" type:"string"`
+	Username  *string `name:"username" type:"string"`
+	Password  string  `name:"password" type:"string" required:"true"`
+	CaptchaId string  `name:"captcha_id" type:"string"`
+	Captcha   string  `name:"captcha" type:"string"`
 }
 
-func loginView(request *goi.Request) interface{} {
+func loginView(request *goi.Request) any {
 	var params loginParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -56,7 +56,7 @@ func loginView(request *goi.Request) interface{} {
 		return validationErr.Response()
 	}
 
-	if params.Captcha_id != "" {
+	if params.CaptchaId != "" {
 		if params.Captcha == "" {
 			return goi.Data{
 				Code:    http.StatusBadRequest,
@@ -64,7 +64,7 @@ func loginView(request *goi.Request) interface{} {
 				Results: nil,
 			}
 		}
-		err = captcha.VerifyCode(params.Captcha_id, params.Captcha)
+		err = captcha.VerifyCode(params.CaptchaId, params.Captcha)
 		if err != nil {
 			return goi.Data{
 				Code:    http.StatusBadRequest,
@@ -124,7 +124,7 @@ func loginView(request *goi.Request) interface{} {
 
 	payload := utils.Payloads{
 		Exp:      time.Now().In(goi.GetLocation()).Add(2 * time.Hour).Unix(), // 设置过期时间为2小时后
-		User_id:  *userInfo.Id,
+		UserId:   *userInfo.Id,
 		Username: *userInfo.Username,
 	}
 	token, err := utils.NewToken(payload, goi.Settings.SECRET_KEY)
@@ -137,7 +137,7 @@ func loginView(request *goi.Request) interface{} {
 		}
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"user":  userInfo,
 		"token": token,
 	}

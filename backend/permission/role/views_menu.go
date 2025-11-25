@@ -10,20 +10,20 @@ import (
 
 // 参数验证
 type roleMenuListValidParams struct {
-	Role_id int `name:"role_id" type:"int" required:"true"`
+	RoleId int `name:"role_id" type:"int" required:"true"`
 }
 
 type menuListModel struct {
-	Id        *int64           `json:"id"`
-	Parent_id *int64           `json:"parent_id"`
-	Name      *string          `json:"name"`
-	Icon      *string          `json:"icon"`
-	Path      *string          `json:"path"`
-	Checked   bool             `json:"checked"`
-	Children  []*menuListModel `json:"children"`
+	Id       *int64           `json:"id"`
+	ParentId *int64           `json:"parent_id"`
+	Name     *string          `json:"name"`
+	Icon     *string          `json:"icon"`
+	Path     *string          `json:"path"`
+	Checked  bool             `json:"checked"`
+	Children []*menuListModel `json:"children"`
 }
 
-func roleMenuListView(request *goi.Request) interface{} {
+func roleMenuListView(request *goi.Request) any {
 	var params roleMenuListValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -48,7 +48,7 @@ func roleMenuListView(request *goi.Request) interface{} {
 
 	for _, menu := range menu_list {
 		sqlite3DB.SetModel(RoleMenuModel{})
-		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.Role_id, menu.Id).Count()
+		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.RoleId, menu.Id).Count()
 		if err != nil {
 			return goi.Data{
 				Code:    http.StatusInternalServerError,

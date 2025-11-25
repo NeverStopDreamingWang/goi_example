@@ -6,7 +6,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-var DatabaseRouter *goi.MetaRouter
+var DatabaseRouter *goi.Router
 
 func init() {
 	// 子路由

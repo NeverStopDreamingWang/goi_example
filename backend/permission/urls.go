@@ -6,7 +6,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-var PermissionRouter *goi.MetaRouter
+var PermissionRouter *goi.Router
 
 func init() {
 	// 子路由

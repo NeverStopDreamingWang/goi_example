@@ -6,7 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func LoadYaml(filePath string, value interface{}) error {
+func LoadYaml(filePath string, value any) error {
 	// 打开 YAML 文件
 	file, err := os.Open(filePath)
 	if err != nil {

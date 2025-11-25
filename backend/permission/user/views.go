@@ -14,27 +14,27 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page          int             `name:"page" type:"int" required:"true"`
-	Page_Size     int             `name:"page_size" type:"int" required:"true"`
-	Username      *string         `name:"username" type:"string"`
-	Status        *UserStatusType `name:"status" type:"int"`
-	Role_id       *int64          `name:"role_id" type:"int"`
-	Department_id *int64          `name:"department_id" type:"int"`
+	Page         int             `name:"page" type:"int" required:"true"`
+	PageSize     int             `name:"page_size" type:"int" required:"true"`
+	Username     *string         `name:"username" type:"string"`
+	Status       *UserStatusType `name:"status" type:"int"`
+	RoleId       *int64          `name:"role_id" type:"int"`
+	DepartmentId *int64          `name:"department_id" type:"int"`
 }
 
 type userList struct {
-	Id              *int64          `json:"id"`
-	Username        *string         `json:"username"`
-	Email           *string         `json:"email"`
-	Status          *UserStatusType `json:"status"`
-	Role_id         *int64          `json:"role_id"`
-	Last_login_time *string         `json:"last_login_time"`
-	Create_time     *string         `json:"create_time"`
-	Update_time     *string         `json:"update_time"`
-	Role            *role.RoleModel `json:"role"`
+	Id            *int64          `json:"id"`
+	Username      *string         `json:"username"`
+	Email         *string         `json:"email"`
+	Status        *UserStatusType `json:"status"`
+	RoleId        *int64          `json:"role_id"`
+	LastLoginTime *string         `json:"last_login_time"`
+	CreateTime    *string         `json:"create_time"`
+	UpdateTime    *string         `json:"update_time"`
+	Role          *role.RoleModel `json:"role"`
 }
 
-func listView(request *goi.Request) interface{} {
+func listView(request *goi.Request) any {
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -55,13 +55,13 @@ func listView(request *goi.Request) interface{} {
 	if params.Status != nil {
 		sqlite3DB = sqlite3DB.Where("`status` = ?", params.Status)
 	}
-	if params.Role_id != nil {
-		sqlite3DB = sqlite3DB.Where("`role_id` = ?", params.Role_id)
+	if params.RoleId != nil {
+		sqlite3DB = sqlite3DB.Where("`role_id` = ?", params.RoleId)
 	}
-	if params.Department_id != nil {
-		sqlite3DB = sqlite3DB.Where("`department_id` = ?", params.Department_id)
+	if params.DepartmentId != nil {
+		sqlite3DB = sqlite3DB.Where("`department_id` = ?", params.DepartmentId)
 	}
-	total, total_page, err := sqlite3DB.Page(params.Page, params.Page_Size)
+	total, total_page, err := sqlite3DB.Page(params.Page, params.PageSize)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -83,7 +83,7 @@ func listView(request *goi.Request) interface{} {
 	for _, user := range user_list {
 		sqlite3DB.SetModel(role.RoleModel{})
 		user.Role = &role.RoleModel{}
-		err = sqlite3DB.Where("`id` = ?", user.Role_id).First(user.Role)
+		err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
 		if err != nil {
 			continue
 		}
@@ -92,7 +92,7 @@ func listView(request *goi.Request) interface{} {
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: map[string]interface{}{
+		Results: map[string]any{
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
@@ -107,10 +107,10 @@ type createValidParams struct {
 	Password string         `name:"password" type:"string" required:"true"`
 	Email    string         `name:"email" type:"string" required:"true"`
 	Status   UserStatusType `name:"status" type:"int" required:"true"`
-	Role_id  int64          `name:"role_id" type:"int" required:"true"`
+	RoleId   int64          `name:"role_id" type:"int" required:"true"`
 }
 
-func createView(request *goi.Request) interface{} {
+func createView(request *goi.Request) any {
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -126,7 +126,7 @@ func createView(request *goi.Request) interface{} {
 		Password: &params.Password,
 		Email:    &params.Email,
 		Status:   &params.Status,
-		Role_id:  &params.Role_id,
+		RoleId:   &params.RoleId,
 	}
 
 	// 参数验证
@@ -155,7 +155,7 @@ func createView(request *goi.Request) interface{} {
 	}
 }
 
-func retrieveView(request *goi.Request) interface{} {
+func retrieveView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -196,10 +196,10 @@ type updateValidParams struct {
 	Password *string         `name:"password" type:"string"`
 	Email    *string         `name:"email" type:"string"`
 	Status   *UserStatusType `name:"status" type:"int"`
-	Role_id  *int64          `name:"role_id" type:"int"`
+	RoleId   *int64          `name:"role_id" type:"int"`
 }
 
-func updateView(request *goi.Request) interface{} {
+func updateView(request *goi.Request) any {
 	var pk int64
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -242,7 +242,7 @@ func updateView(request *goi.Request) interface{} {
 		Password: params.Password,
 		Email:    params.Email,
 		Status:   params.Status,
-		Role_id:  params.Role_id,
+		RoleId:   params.RoleId,
 	}
 
 	// 参数验证
@@ -270,7 +270,7 @@ func updateView(request *goi.Request) interface{} {
 	}
 }
 
-func deleteView(request *goi.Request) interface{} {
+func deleteView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 

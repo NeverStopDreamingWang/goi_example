@@ -12,11 +12,11 @@ func get_children_menu(menuList []*menuListModel) []*menuListModel {
 	// 遍历数据，构建树形结构
 	for _, item := range menuList {
 		// 判断父节点ID，如果为 nil 说明是根节点
-		if item.Parent_id == nil {
+		if item.ParentId == nil {
 			tree = append(tree, item)
 		} else {
 			// 查找父节点
-			parent, exists := nodes[*item.Parent_id]
+			parent, exists := nodes[*item.ParentId]
 			if exists {
 				// 将当前节点添加到父节点的Children字段
 				parent.Children = append(parent.Children, item)

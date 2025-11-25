@@ -44,10 +44,10 @@ func (self UserModel) Validate() error {
 			return errors.New("用户状态错误")
 		}
 	}
-	if self.Role_id != nil {
+	if self.RoleId != nil {
 		// 验证角色是否存在
 		sqlite3DB.SetModel(role.RoleModel{})
-		flag, err := sqlite3DB.Where("`id` = ?", self.Role_id).Exists()
+		flag, err := sqlite3DB.Where("`id` = ?", self.RoleId).Exists()
 		if err != nil {
 			return errors.New("查询数据库错误")
 		}
@@ -59,9 +59,9 @@ func (self UserModel) Validate() error {
 }
 
 func (self *UserModel) Create() error {
-	if self.Create_time == nil {
-		Create_time := goi.GetTime().Format(time.DateTime)
-		self.Create_time = &Create_time
+	if self.CreateTime == nil {
+		CreateTime := goi.GetTime().Format(time.DateTime)
+		self.CreateTime = &CreateTime
 	}
 
 	// 密码加密
@@ -100,8 +100,8 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 		validated_data.Password = &encryptPassword
 	}
 
-	Update_time := goi.GetTime().Format(time.DateTime)
-	validated_data.Update_time = &Update_time
+	UpdateTime := goi.GetTime().Format(time.DateTime)
+	validated_data.UpdateTime = &UpdateTime
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)

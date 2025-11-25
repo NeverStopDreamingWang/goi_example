@@ -3,7 +3,7 @@ module goi_example
 go 1.24.0
 
 require (
-	github.com/NeverStopDreamingWang/goi v1.8.1
+	github.com/NeverStopDreamingWang/goi v1.9.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/redis/go-redis/v9 v9.17.0
@@ -34,3 +34,6 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
+
+//replace github.com/NeverStopDreamingWang/goi v1.9.0 => /home/ubuntu/goi
+//replace github.com/NeverStopDreamingWang/goi v1.9.0 => D:\private\project\goi

@@ -18,13 +18,13 @@ func init() {
 // 手机号
 var phoneConverter = goi.Converter{
 	Regex: `(1[3456789]\d{9})`,
-	ToGo:  func(value string) (interface{}, error) { return value, nil },
+	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
 // ObjectId
 var objectIdConverter = goi.Converter{
 	Regex: `([a-fA-F0-9]{24})`,
-	ToGo: func(value string) (interface{}, error) {
+	ToGo: func(value string) (any, error) {
 		objectId, err := primitive.ObjectIDFromHex(value)
 		if err != nil {
 			return nil, errors.New("ID 错误")

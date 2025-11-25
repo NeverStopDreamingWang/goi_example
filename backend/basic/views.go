@@ -11,10 +11,10 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-func Test1(request *goi.Request) interface{} {
+func Test1(request *goi.Request) any {
 	goi.Log.DebugF("Test1")
 
-	return map[string]interface{}{
+	return map[string]any{
 		"status": http.StatusOK,
 		"msg":    "Hello World",
 		"data":   "",
@@ -22,7 +22,7 @@ func Test1(request *goi.Request) interface{} {
 }
 
 // 路由传参
-func TestPathParams(request *goi.Request) interface{} {
+func TestPathParams(request *goi.Request) any {
 	var name string
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("name", &name) // 路由传参
@@ -44,7 +44,7 @@ type testQueryParamsValidParams struct {
 }
 
 // query 查询字符串传参
-func TestQueryParams(request *goi.Request) interface{} {
+func TestQueryParams(request *goi.Request) any {
 	var params testQueryParamsValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -81,7 +81,7 @@ type testBodyParamsValidParams struct {
 }
 
 // body 请求体传参
-func TestBodyParams(request *goi.Request) interface{} {
+func TestBodyParams(request *goi.Request) any {
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
 	bodyParams = request.BodyParams()
@@ -126,7 +126,7 @@ type testParamsValidParams struct {
 // int *int []*int []... map[string]*int map[...]...
 // ...
 
-func TestParamsValid(request *goi.Request) interface{} {
+func TestParamsValid(request *goi.Request) any {
 	var params testParamsValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -155,7 +155,7 @@ func TestParamsValid(request *goi.Request) interface{} {
 	}
 }
 
-func TestConverterParamsStr(request *goi.Request) interface{} {
+func TestConverterParamsStr(request *goi.Request) any {
 	var name string
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("name", &name)
@@ -172,7 +172,7 @@ func TestConverterParamsStr(request *goi.Request) interface{} {
 }
 
 // 测试手机号路由转换器
-func TestConverterParamsPhone(request *goi.Request) interface{} {
+func TestConverterParamsPhone(request *goi.Request) any {
 	var phone string
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("phone", &phone)
@@ -189,7 +189,7 @@ func TestConverterParamsPhone(request *goi.Request) interface{} {
 }
 
 // 上下文
-func TestContext(request *goi.Request) interface{} {
+func TestContext(request *goi.Request) any {
 	// 请求上下文
 	requestID := request.Object.Context().Value("requestID")
 
@@ -203,7 +203,7 @@ func TestContext(request *goi.Request) interface{} {
 }
 
 // 上下文参数
-func TestContextParams(request *goi.Request) interface{} {
+func TestContextParams(request *goi.Request) any {
 	var validationErr goi.ValidationError
 
 	// 请求上下文参数
@@ -222,7 +222,7 @@ func TestContextParams(request *goi.Request) interface{} {
 }
 
 // 返回文件
-func TestFile(request *goi.Request) interface{} {
+func TestFile(request *goi.Request) any {
 	absolutePath := filepath.Join(goi.Settings.BASE_DIR, "static/test.txt")
 	file, err := os.Open(absolutePath)
 	if err != nil {
@@ -237,7 +237,7 @@ func TestFile(request *goi.Request) interface{} {
 }
 
 // 异常处理
-func TestPanic(request *goi.Request) interface{} {
+func TestPanic(request *goi.Request) any {
 	var bodyParams goi.Params
 	bodyParams = request.BodyParams()
 	name := bodyParams["name"]

@@ -47,9 +47,9 @@ func (self UserModel) Validate() error {
 }
 
 func (self *UserModel) Create() error {
-	if self.Create_time == nil {
-		Create_time := goi.GetTime().Format(time.DateTime)
-		self.Create_time = &Create_time
+	if self.CreateTime == nil {
+		CreateTime := goi.GetTime().Format(time.DateTime)
+		self.CreateTime = &CreateTime
 	}
 
 	// 密码加密
@@ -88,8 +88,8 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 		validated_data.Password = &encryptPassword
 	}
 
-	Update_time := goi.GetTime().Format(time.DateTime)
-	validated_data.Update_time = &Update_time
+	UpdateTime := goi.GetTime().Format(time.DateTime)
+	validated_data.UpdateTime = &UpdateTime
 
 	mysqlDB := db.Connect[*mysql.Engine]("mysql")
 	mysqlDB.SetModel(self)

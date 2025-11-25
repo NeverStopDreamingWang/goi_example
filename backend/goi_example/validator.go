@@ -25,7 +25,7 @@ type validationError struct {
 }
 
 // 创建参数验证错误方法
-func (validationErr validationError) NewValidationError(status int, message string, args ...interface{}) goi.ValidationError {
+func (validationErr validationError) NewValidationError(status int, message string, args ...any) goi.ValidationError {
 	return &validationError{
 		Status:  status,
 		Message: message,
@@ -51,7 +51,7 @@ func (validationErr validationError) Response() goi.Response {
 
 type phoneValidator struct{}
 
-func (validator phoneValidator) Validate(value interface{}) goi.ValidationError {
+func (validator phoneValidator) Validate(value any) goi.ValidationError {
 	switch typeValue := value.(type) {
 	case int:
 		valueStr := strconv.Itoa(typeValue)
@@ -72,7 +72,7 @@ func (validator phoneValidator) Validate(value interface{}) goi.ValidationError 
 	return nil
 }
 
-func (validator phoneValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
+func (validator phoneValidator) ToGo(value any) (any, goi.ValidationError) {
 	switch typeValue := value.(type) {
 	case int:
 		return typeValue, nil
@@ -91,7 +91,7 @@ func (validator phoneValidator) ToGo(value interface{}) (interface{}, goi.Valida
 // MongoDB objectId  类型
 type objectIdValidator struct{}
 
-func (validator objectIdValidator) Validate(value interface{}) goi.ValidationError {
+func (validator objectIdValidator) Validate(value any) goi.ValidationError {
 	switch typeValue := value.(type) {
 	case string:
 		var reStr = `^([a-fA-F0-9]{24})$`
@@ -105,7 +105,7 @@ func (validator objectIdValidator) Validate(value interface{}) goi.ValidationErr
 	return nil
 }
 
-func (validator objectIdValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
+func (validator objectIdValidator) ToGo(value any) (any, goi.ValidationError) {
 	switch typeValue := value.(type) {
 	case string:
 		objectId, err := primitive.ObjectIDFromHex(typeValue)

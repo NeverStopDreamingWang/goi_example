@@ -62,9 +62,9 @@ func printRouteInfo(route goi.Route, count int) {
 		method_list = append(method_list, method)
 	}
 	fmt.Printf("%vViewSet: %v\n", strings.Repeat(replaceStr, count+1), strings.Join(method_list, ", "))
-	if len(route.Children) > 0 {
+	if len(route.Include) > 0 {
 		fmt.Printf("%vChildren:\n", strings.Repeat(replaceStr, count))
-		for _, child := range route.Children {
+		for _, child := range route.Include {
 			printRouteInfo(child, count+1)
 		}
 	}

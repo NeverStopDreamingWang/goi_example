@@ -6,7 +6,7 @@ import (
 	"github.com/NeverStopDreamingWang/goi"
 )
 
-var ApiRouter *goi.MetaRouter
+var ApiRouter *goi.Router
 
 func init() {
 	// 前端页面

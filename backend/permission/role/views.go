@@ -12,12 +12,12 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page      int    `name:"page" type:"int" required:"true"`
-	Page_Size int    `name:"page_size" type:"int" required:"true"`
-	Name      string `name:"name" type:"string"`
+	Page     int    `name:"page" type:"int" required:"true"`
+	PageSize int    `name:"page_size" type:"int" required:"true"`
+	Name     string `name:"name" type:"string"`
 }
 
-func listView(request *goi.Request) interface{} {
+func listView(request *goi.Request) any {
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -35,7 +35,7 @@ func listView(request *goi.Request) interface{} {
 	if params.Name != "" {
 		sqlite3DB = sqlite3DB.Where("`name` like ?", "%"+params.Name+"%")
 	}
-	total, total_page, err := sqlite3DB.Page(params.Page, params.Page_Size)
+	total, total_page, err := sqlite3DB.Page(params.Page, params.PageSize)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -56,7 +56,7 @@ func listView(request *goi.Request) interface{} {
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "ok",
-		Results: map[string]interface{}{
+		Results: map[string]any{
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
@@ -71,7 +71,7 @@ type createValidParams struct {
 	Menu_List []*int64 `name:"menu_list" type:"slice" required:"true"`
 }
 
-func createView(request *goi.Request) interface{} {
+func createView(request *goi.Request) any {
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -112,7 +112,7 @@ func createView(request *goi.Request) interface{} {
 	}
 }
 
-func retrieveView(request *goi.Request) interface{} {
+func retrieveView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -153,7 +153,7 @@ type updateValidParams struct {
 	Menu_List []*int64 `name:"menu_list" type:"slice"`
 }
 
-func updateView(request *goi.Request) interface{} {
+func updateView(request *goi.Request) any {
 	var pk int64
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -221,7 +221,7 @@ func updateView(request *goi.Request) interface{} {
 	}
 }
 
-func deleteView(request *goi.Request) interface{} {
+func deleteView(request *goi.Request) any {
 	var pk int64
 	var validationErr goi.ValidationError
 
@@ -275,7 +275,7 @@ type RoleSelect struct {
 	Name *string `json:"label"`
 }
 
-func allView(request *goi.Request) interface{} {
+func allView(request *goi.Request) any {
 	var params selectValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError

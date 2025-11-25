@@ -69,7 +69,7 @@ func Database() *mongo.Database {
 }
 
 // 事务操作
-func WithTransaction(ctx context.Context, transactionFunc func(sessionContext mongo.SessionContext, args ...interface{}) error, args ...interface{}) error {
+func WithTransaction(ctx context.Context, transactionFunc func(sessionContext mongo.SessionContext, args ...any) error, args ...any) error {
 	var err error
 	// 开始事务
 	session, err := MongoDB.StartSession()
@@ -112,7 +112,7 @@ func WithTimeout(second int) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), time.Duration(second)*time.Second)
 }
 
-func UpdateMap(validated_data interface{}) bson.M {
+func UpdateMap(validated_data any) bson.M {
 	update := bson.M{}
 
 	validatedDataValue := reflect.ValueOf(validated_data)

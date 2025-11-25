@@ -15,12 +15,12 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page      int64   `name:"page" type:"int" required:"true"`
-	Page_Size int64   `name:"page_size" type:"int" required:"true"`
-	Search    *string `name:"search" type:"string"`
+	Page     int64   `name:"page" type:"int" required:"true"`
+	PageSize int64   `name:"page_size" type:"int" required:"true"`
+	Search   *string `name:"search" type:"string"`
 }
 
-func listView(request *goi.Request) interface{} {
+func listView(request *goi.Request) any {
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -36,12 +36,12 @@ func listView(request *goi.Request) interface{} {
 	collection := database.Collection("document")
 
 	// 计算skip值
-	skip := (params.Page - 1) * params.Page_Size
+	skip := (params.Page - 1) * params.PageSize
 
 	// 设置分页查询选项
 	findOptions := options.Find()
 	findOptions.SetSkip(skip)
-	findOptions.SetLimit(params.Page_Size)
+	findOptions.SetLimit(params.PageSize)
 
 	// 构建查询条件
 	filter := bson.M{}
@@ -82,11 +82,11 @@ func listView(request *goi.Request) interface{} {
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: map[string]interface{}{
+		Results: map[string]any{
 			"list":  document_list,
 			"total": total,
 			"page":  params.Page,
-			"size":  params.Page_Size,
+			"size":  params.PageSize,
 		},
 	}
 }
@@ -97,7 +97,7 @@ type createValidParams struct {
 	Content *string `name:"content" type:"string" required:"true"`
 }
 
-func createView(request *goi.Request) interface{} {
+func createView(request *goi.Request) any {
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -140,7 +140,7 @@ func createView(request *goi.Request) interface{} {
 	}
 }
 
-func retrieveView(request *goi.Request) interface{} {
+func retrieveView(request *goi.Request) any {
 	var pk primitive.ObjectID // object_id 转换器将字符串转换为 primitive.ObjectID 类型
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由转换器自动转换
@@ -187,7 +187,7 @@ type updateValidParams struct {
 	Content *string `name:"content" type:"string"`
 }
 
-func updateView(request *goi.Request) interface{} {
+func updateView(request *goi.Request) any {
 	var pk primitive.ObjectID
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -259,7 +259,7 @@ func updateView(request *goi.Request) interface{} {
 	}
 }
 
-func deleteView(request *goi.Request) interface{} {
+func deleteView(request *goi.Request) any {
 	var pk primitive.ObjectID
 	var validationErr goi.ValidationError
 

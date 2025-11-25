@@ -21,15 +21,15 @@ func init() {
 
 // 模型
 type DocumentModel struct {
-	Id          *primitive.ObjectID `bson:"id" json:"id"`
-	Name        *string             `bson:"name" json:"name"`
-	Content     *string             `bson:"content" json:"content"`
-	Create_time *string             `bson:"create_Time" json:"create_time"`
-	Update_time *string             `bson:"update_Time" json:"update_time"`
+	Id         *primitive.ObjectID `bson:"id" json:"id"`
+	Name       *string             `bson:"name" json:"name"`
+	Content    *string             `bson:"content" json:"content"`
+	CreateTime *string             `bson:"create_Time" json:"create_time"`
+	UpdateTime *string             `bson:"update_Time" json:"update_time"`
 }
 
 func initDocument() error {
-	initDocumentList := [][]interface{}{
+	initDocumentList := [][]any{
 		{"test", "test"},
 	}
 

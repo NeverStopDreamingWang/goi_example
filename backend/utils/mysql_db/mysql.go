@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/NeverStopDreamingWang/goi"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // MySQL 配置

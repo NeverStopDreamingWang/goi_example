@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/NeverStopDreamingWang/goi"
@@ -112,8 +113,27 @@ func WithTimeout(second int) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), time.Duration(second)*time.Second)
 }
 
-func UpdateMap(validated_data any) bson.M {
+func WithTimeoutCtx(second int, fn func(ctx context.Context) error) error {
+	ctx, cancel := WithTimeout(second)
+	defer cancel()
+	return fn(ctx)
+}
+
+// UpdateMap 将结构体转换为 bson.M，跳过零值字段
+//
+// 参数:
+//   - validated_data any: 要转换的结构体实例
+//   - allowZeroFields ...string: 允许为零值的字段名列表
+//
+// 返回:
+//   - bson.M: 转换后的 bson.M
+func UpdateMap(validated_data any, allowZeroFields ...string) bson.M {
 	update := bson.M{}
+
+	allowZero := make(map[string]struct{})
+	for _, f := range allowZeroFields {
+		allowZero[f] = struct{}{}
+	}
 
 	validatedDataValue := reflect.ValueOf(validated_data)
 	if validatedDataValue.Kind() == reflect.Ptr {
@@ -124,27 +144,34 @@ func UpdateMap(validated_data any) bson.M {
 
 	for i := 0; i < validatedDataValue.NumField(); i++ {
 		field := validatedDataValue.Field(i)
+
+		if !field.CanInterface() {
+			continue
+		}
+
 		fieldType := validatedDataType.Field(i)
 
-		if field.IsZero() {
-			continue
-		}
-		if !field.CanSet() {
+		bsonName := getBsonName(fieldType)
+		if bsonName == "" {
 			continue
 		}
 
-		value := field.Interface()
-
-		// 使用 bson tag 作为字段名（没有就用结构体字段名）
-		bsonTag := fieldType.Tag.Get("bson")
-		if bsonTag == "-" {
+		_, isAllow := allowZero[bsonName]
+		if field.IsZero() && !isAllow {
 			continue
 		}
-		if bsonTag == "" {
-			bsonTag = fieldType.Name
-		}
-
-		update[bsonTag] = value
+		update[bsonName] = field.Interface()
 	}
 	return update
+}
+
+func getBsonName(fieldType reflect.StructField) string {
+	tag := fieldType.Tag.Get("bson")
+	if tag == "-" {
+		return ""
+	}
+	if tag == "" {
+		return fieldType.Name
+	}
+	return strings.Split(tag, ",")[0]
 }

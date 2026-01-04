@@ -12,8 +12,8 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page     int    `name:"page" type:"int" required:"true"`
-	PageSize int    `name:"page_size" type:"int" required:"true"`
+	Page     int64  `name:"page" type:"int" required:"true"`
+	PageSize int64  `name:"page_size" type:"int" required:"true"`
 	Name     string `name:"name" type:"string"`
 }
 

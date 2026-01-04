@@ -14,8 +14,8 @@ import (
 
 // 参数验证
 type listValidParams struct {
-	Page         int             `name:"page" type:"int" required:"true"`
-	PageSize     int             `name:"page_size" type:"int" required:"true"`
+	Page         int64           `name:"page" type:"int" required:"true"`
+	PageSize     int64           `name:"page_size" type:"int" required:"true"`
 	Username     *string         `name:"username" type:"string"`
 	Status       *UserStatusType `name:"status" type:"int"`
 	RoleId       *int64          `name:"role_id" type:"int"`

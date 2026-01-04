@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"goi_example/backend/utils"
 	"goi_example/backend/utils/mongo_db"
 	"goi_example/backend/utils/mysql_db"
 	"goi_example/backend/utils/redis_db"
@@ -24,7 +23,7 @@ import (
 
 // Http 服务
 var Server *goi.Engine
-var Config *ConfigModel
+var Config *ConfigModel = &ConfigModel{}
 
 var STATIC_DIR string
 var STATIC_URL = "/static/"
@@ -42,14 +41,13 @@ func init() {
 	Server.Settings.BASE_DIR, _ = os.Getwd()
 
 	// 加载 Config 配置
-	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
-
-	Config = &ConfigModel{}
-	err = utils.LoadYaml(configPath, Config)
+	err = Config.Load()
 	if err != nil {
 		panic(err)
 	}
 
+	// DEBUG
+	Server.Settings.DEBUG = Config.Debug
 	// 网络协议
 	Server.Settings.NET_WORK = "tcp" // 默认 "tcp" 常用网络协议 "tcp"、"tcp4"、"tcp6"、"udp"、"udp4"、"udp6
 	// 监听地址
@@ -180,14 +178,12 @@ BwIDAQAB
 	Server.Cache.EXPIRATION_POLICY = goi.PERIODIC // 过期策略
 	Server.Cache.MAX_SIZE = 1024 * 1024 * 20      // 单位为字节，0 为不限制使用
 
-	// 日志 DEBUG 设置
-	Server.Log.DEBUG = Config.Debug
-	// 注册日志
-	defaultLog := newDefaultLog() // 默认日志
-	err = Server.Log.RegisterLogger(defaultLog)
-	if err != nil {
-		panic(err)
-	}
+	// 创建日志，或者修改全局日志配置
+	Server.Log = newDefaultLog() // 默认日志
+	// 设置全局日志
+	goi.Log = Server.Log
+	// 注册日志切割任务
+	goi.RegisterOnStartup(goi.Log)
 
 	STATIC_DIR = path.Join(Server.Settings.BASE_DIR, "static/")
 	err = os.MkdirAll(STATIC_DIR, os.ModePerm)
@@ -211,49 +207,47 @@ BwIDAQAB
 		mongo_db.Connect()
 	}
 
+	// 注册后台任务，在 RunServer 之前注册，之后注册的任务不会执行
+	// RunServer 内部会启动注册 goroutine 执行任务
+	// goi.RegisterOnStartup(&Task{})
+
 	// 注册关闭回调处理程序
-	shutdown := &Shutdown{}
-	goi.RegisterOnShutdown(shutdown)
+	goi.RegisterOnShutdown(&Shutdown{})
 }
 
 type Shutdown struct{}
 
-func (self Shutdown) Name() string {
-	return "关闭自定义数据库连接"
+// ShutdownName 关闭回调名称
+func (self *Shutdown) ShutdownName() string {
+	return "自定义关闭操作"
 }
 
+// OnShutdown 关闭回调处理程序
 func (self *Shutdown) OnShutdown() error {
 	goi.Log.Info("关闭操作")
 	return nil
 }
 
-// 后台任务
-func init() {
-	// 注册后台任务，在 RunServer 之前注册，之后注册的任务不会执行
-	// RunServer 内部会启动注册 goroutine 执行任务
-	goi.RegisterOnStartup(&Task{})
-}
-
 type Task struct{}
 
-func (self *Task) Name() string {
+func (self *Task) StartupName() string {
 	return "任务名称"
 }
 
 // OnStartup 启动任务
 func (self *Task) OnStartup(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
 	defer wg.Done()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			goi.Log.Info("任务结束")
 			return
-		default:
+		case <-ticker.C:
 			// TODO
-
-			time.Sleep(1 * time.Second)
 		}
 	}
 }

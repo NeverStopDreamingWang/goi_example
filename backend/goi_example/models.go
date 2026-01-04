@@ -1,6 +1,9 @@
 package goi_example
 
 import (
+	"path"
+
+	"goi_example/backend/utils"
 	"goi_example/backend/utils/mongo_db"
 	"goi_example/backend/utils/mysql_db"
 	"goi_example/backend/utils/redis_db"
@@ -16,4 +19,16 @@ type ConfigModel struct {
 	MySQLConfig      *mysql_db.ConfigModel   `yaml:"mysql"`
 	RedisConfig      *redis_db.ConfigModel   `yaml:"redis"`
 	MongoDBConfig    *mongo_db.ConfigModel   `yaml:"mongodb"`
+}
+
+// 加载配置
+func (self *ConfigModel) Load() error {
+	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
+	return utils.LoadYaml(configPath, self)
+}
+
+// 保存配置
+func (self *ConfigModel) Save() error {
+	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
+	return utils.SaveYaml(configPath, self)
 }

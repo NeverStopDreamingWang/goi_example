@@ -36,9 +36,9 @@ func roleMenuListView(request *goi.Request) any {
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 
-	var menu_list []*menuListModel
+	var menuList []*menuListModel
 	sqlite3DB.SetModel(MenuModel{})
-	err := sqlite3DB.Select(&menu_list)
+	err := sqlite3DB.Select(&menuList)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -46,7 +46,7 @@ func roleMenuListView(request *goi.Request) any {
 		}
 	}
 
-	for _, menu := range menu_list {
+	for _, menu := range menuList {
 		sqlite3DB.SetModel(RoleMenuModel{})
 		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.RoleId, menu.Id).Count()
 		if err != nil {
@@ -58,10 +58,10 @@ func roleMenuListView(request *goi.Request) any {
 		menu.Checked = count != 0
 	}
 	// 获取树形结构
-	menu_list = get_children_menu(menu_list)
+	menuList = get_children_menu(menuList)
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: menu_list,
+		Results: menuList,
 	}
 }

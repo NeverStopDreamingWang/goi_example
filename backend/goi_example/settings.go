@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"goi_example/backend/utils/mongo_db"
-	"goi_example/backend/utils/mysql_db"
-	"goi_example/backend/utils/redis_db"
-	"goi_example/backend/utils/sqlite3_db"
+	"goi_example/backend/utils/mongodb"
+	"goi_example/backend/utils/mysqldb"
+	"goi_example/backend/utils/redisdb"
+	"goi_example/backend/utils/sqlite3db"
 
 	"github.com/NeverStopDreamingWang/goi"
 	"github.com/NeverStopDreamingWang/goi/middleware/clickjacking"
@@ -144,20 +144,20 @@ BwIDAQAB
 	)
 
 	if Config.SQLite3Config != nil {
-		sqlite3_db.Config = Config.SQLite3Config
+		sqlite3db.Config = Config.SQLite3Config
 		// 数据库配置
 		Server.Settings.DATABASES["default"] = &goi.DataBase{
 			ENGINE:  "sqlite3",
-			Connect: sqlite3_db.Connect,
+			Connect: sqlite3db.Connect,
 		}
 	}
 
 	if Config.MySQLConfig != nil {
-		mysql_db.Config = Config.MySQLConfig
+		mysqldb.Config = Config.MySQLConfig
 		// 数据库配置
 		Server.Settings.DATABASES["mysql"] = &goi.DataBase{
 			ENGINE:  "mysql",
-			Connect: mysql_db.Connect,
+			Connect: mysqldb.Connect,
 		}
 	}
 
@@ -199,12 +199,12 @@ BwIDAQAB
 	// Server.Settings.Get(key string, dest any)
 
 	if Config.RedisConfig != nil {
-		redis_db.Config = Config.RedisConfig
-		redis_db.Connect()
+		redisdb.Config = Config.RedisConfig
+		redisdb.Connect()
 	}
 	if Config.MongoDBConfig != nil {
-		mongo_db.Config = Config.MongoDBConfig
-		mongo_db.Connect()
+		mongodb.Config = Config.MongoDBConfig
+		mongodb.Connect()
 	}
 
 	// 注册后台任务，在 RunServer 之前注册，之后注册的任务不会执行

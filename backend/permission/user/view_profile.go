@@ -31,7 +31,7 @@ type profileUser struct {
 	CreateTime    *string         `json:"create_time"`
 	UpdateTime    *string         `json:"update_time"`
 	Role          *role.RoleModel `json:"role"`
-	Menu_List     []*userMenuList `json:"menu_list"`
+	MenuList      []*userMenuList `json:"menu_list"`
 }
 
 func profileRetrieveView(request *goi.Request) any {
@@ -95,7 +95,7 @@ func profileRetrieveView(request *goi.Request) any {
 	sqlite3DB.SetModel(role.MenuModel{})
 	for i, roleMenu := range roleMenuList {
 		MenuList[i] = &userMenuList{}
-		err = sqlite3DB.Where("id = ?", roleMenu.Menu_Id).First(MenuList[i])
+		err = sqlite3DB.Where("id = ?", roleMenu.MenuId).First(MenuList[i])
 		if err != nil {
 			return goi.Data{
 				Code:    http.StatusInternalServerError,
@@ -105,7 +105,7 @@ func profileRetrieveView(request *goi.Request) any {
 		}
 	}
 
-	user.Menu_List = get_children_menu(MenuList)
+	user.MenuList = get_children_menu(MenuList)
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",

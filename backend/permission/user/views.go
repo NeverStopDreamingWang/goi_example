@@ -61,7 +61,7 @@ func listView(request *goi.Request) any {
 	if params.DepartmentId != nil {
 		sqlite3DB = sqlite3DB.Where("`department_id` = ?", params.DepartmentId)
 	}
-	total, total_page, err := sqlite3DB.Page(params.Page, params.PageSize)
+	total, totalPage, err := sqlite3DB.Page(params.Page, params.PageSize)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -70,8 +70,8 @@ func listView(request *goi.Request) any {
 		}
 	}
 
-	var user_list []*userList
-	err = sqlite3DB.Select(&user_list)
+	var userList []*userList
+	err = sqlite3DB.Select(&userList)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -80,7 +80,7 @@ func listView(request *goi.Request) any {
 		}
 	}
 
-	for _, user := range user_list {
+	for _, user := range userList {
 		sqlite3DB.SetModel(role.RoleModel{})
 		user.Role = &role.RoleModel{}
 		err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
@@ -95,8 +95,8 @@ func listView(request *goi.Request) any {
 		Results: map[string]any{
 			"total":      total,
 			"page":       params.Page,
-			"total_page": total_page,
-			"list":       user_list,
+			"total_page": totalPage,
+			"list":       userList,
 		},
 	}
 }

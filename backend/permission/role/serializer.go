@@ -3,7 +3,6 @@ package role
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"goi_example/backend/utils"
 
@@ -33,9 +32,9 @@ func (self RoleModel) Validate() error {
 }
 
 func (self *RoleModel) Create() error {
-	if self.Create_Time == nil {
-		CreateTime := goi.GetTime().Format(time.DateTime)
-		self.Create_Time = &CreateTime
+	if self.CreateTime == nil {
+		CreateTime := goi.GetTime()
+		self.CreateTime = &CreateTime
 	}
 
 	err := sqlite3.Validate(self, true)
@@ -56,10 +55,10 @@ func (self *RoleModel) Create() error {
 		}
 		self.Id = &id
 
-		for _, menu_id := range self.Menu_List {
+		for _, menu_id := range self.MenuList {
 			roleMenu := RoleMenuModel{
-				Role_Id: self.Id,
-				Menu_Id: menu_id,
+				RoleId: self.Id,
+				MenuId: menu_id,
 			}
 			err = roleMenu.Create(engine)
 			if err != nil {
@@ -72,8 +71,8 @@ func (self *RoleModel) Create() error {
 }
 
 func (self *RoleModel) Update(validated_data *RoleModel) error {
-	UpdateTime := goi.GetTime().Format(time.DateTime)
-	validated_data.Update_Time = &UpdateTime
+	UpdateTime := goi.GetTime()
+	validated_data.UpdateTime = &UpdateTime
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
@@ -83,7 +82,7 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 			return errors.New("修改角色错误")
 		}
 
-		if validated_data.Menu_List == nil {
+		if validated_data.MenuList == nil {
 			return nil
 		}
 
@@ -92,10 +91,10 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 		if err != nil {
 			return errors.New("修改角色错误")
 		}
-		for _, menu_id := range validated_data.Menu_List {
+		for _, menu_id := range validated_data.MenuList {
 			roleMenu := RoleMenuModel{
-				Role_Id: self.Id,
-				Menu_Id: menu_id,
+				RoleId: self.Id,
+				MenuId: menu_id,
 			}
 			err = roleMenu.Create(engine)
 			if err != nil {
@@ -135,7 +134,7 @@ func (self *RoleMenuModel) Create(engine *sqlite3.Engine) error {
 	}
 	// 关联角色权限
 	engine.SetModel(self)
-	flag, err := engine.Where("`role_id`=? and `menu_id`=?", self.Role_Id, self.Menu_Id).Exists()
+	flag, err := engine.Where("`role_id`=? and `menu_id`=?", self.RoleId, self.MenuId).Exists()
 	if err != nil && errors.Is(err, sql.ErrNoRows) == false {
 		return errors.New("添加角色菜单错误")
 	}

@@ -1,7 +1,9 @@
 package mongodb
 
 import (
-	"goi_example/backend/utils/mongo_db"
+	"context"
+
+	"goi_example/backend/utils/mongodb"
 
 	"github.com/NeverStopDreamingWang/goi"
 	"go.mongodb.org/mongo-driver/bson"
@@ -9,7 +11,7 @@ import (
 )
 
 func init() {
-	if mongo_db.Config == nil {
+	if mongodb.Config == nil {
 		return
 	}
 	err := initDocument()
@@ -24,8 +26,8 @@ type DocumentModel struct {
 	Id         *primitive.ObjectID `bson:"id" json:"id"`
 	Name       *string             `bson:"name" json:"name"`
 	Content    *string             `bson:"content" json:"content"`
-	CreateTime *string             `bson:"create_Time" json:"create_time"`
-	UpdateTime *string             `bson:"update_Time" json:"update_time"`
+	CreateTime *mongodb.ISODate    `bson:"create_Time" json:"create_time"`
+	UpdateTime *mongodb.ISODate    `bson:"update_Time" json:"update_time"`
 }
 
 func initDocument() error {
@@ -33,12 +35,12 @@ func initDocument() error {
 		{"test", "test"},
 	}
 
-	database := mongo_db.Database()
+	database := mongodb.Database()
 	collection := database.Collection("document")
 
 	filter := bson.M{}
 
-	ctx, cancel := mongo_db.WithTimeout(5)
+	ctx, cancel := mongodb.WithTimeout(5)
 	defer cancel()
 
 	total, err := collection.CountDocuments(ctx, filter)
@@ -64,7 +66,10 @@ func initDocument() error {
 			return err
 		}
 		// 添加
-		err = document.Create()
+
+		err = mongodb.WithTimeoutCtx(5, func(ctx context.Context) error {
+			return document.Create(ctx)
+		})
 		if err != nil {
 			return err
 		}

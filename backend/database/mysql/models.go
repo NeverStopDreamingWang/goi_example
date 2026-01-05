@@ -1,7 +1,9 @@
 package mysql
 
 import (
-	"goi_example/backend/utils/mysql_db"
+	"time"
+
+	"goi_example/backend/utils/mysqldb"
 
 	"github.com/NeverStopDreamingWang/goi"
 	"github.com/NeverStopDreamingWang/goi/db"
@@ -9,7 +11,7 @@ import (
 )
 
 func init() {
-	if mysql_db.Config == nil {
+	if mysqldb.Config == nil {
 		return
 	}
 	// MySQL 数据库
@@ -31,9 +33,9 @@ type UserModel struct {
 	Password      *string         `field_name:"password" field_type:"VARCHAR(255) NOT NULL COMMENT '密码'" json:"-"`
 	Email         *string         `field_name:"email" field_type:"VARCHAR(255) NOT NULL UNIQUE COMMENT '邮箱'" json:"email"`
 	Status        *UserStatusType `field_name:"status" field_type:"SMALLINT unsigned DEFAULT 1 COMMENT '状态'" json:"status"`
-	LastLoginTime *string         `field_name:"last_login_time" field_type:"DATETIME DEFAULT NULL COMMENT '最后登录时间'" json:"last_login_time"`
-	CreateTime    *string         `field_name:"create_time" field_type:"DATETIME NOT NULL COMMENT '创建时间'" json:"create_time"`
-	UpdateTime    *string         `field_name:"update_time" field_type:"DATETIME DEFAULT NULL COMMENT '更新时间'" json:"update_time"`
+	LastLoginTime *time.Time      `field_name:"last_login_time" field_type:"DATETIME DEFAULT NULL COMMENT '最后登录时间'" json:"last_login_time"`
+	CreateTime    *time.Time      `field_name:"create_time" field_type:"DATETIME NOT NULL COMMENT '创建时间'" json:"create_time"`
+	UpdateTime    *time.Time      `field_name:"update_time" field_type:"DATETIME DEFAULT NULL COMMENT '更新时间'" json:"update_time"`
 }
 
 // 设置表配置
@@ -62,7 +64,7 @@ func (userModel UserModel) ModelSet() *mysql.Settings {
 		DATA_DIRECTORY:  "",                   // 设置数据存储目录
 		INDEX_DIRECTORY: "",                   // 设置数据存储目录
 		PARTITION_BY:    "",                   // 定义分区方式，如 RANGE、HASH、LIST
-		COMMENT:         "用户表",                // 设置表注释
+		COMMENT:         "用户表",             // 设置表注释
 
 		// 自定义配置
 		Settings: goi.Params{

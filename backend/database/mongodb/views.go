@@ -1,10 +1,11 @@
 package mongodb
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
-	"goi_example/backend/utils/mongo_db"
+	"goi_example/backend/utils/mongodb"
 
 	"github.com/NeverStopDreamingWang/goi"
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,9 +32,7 @@ func listView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	database := mongo_db.Database()
-
-	collection := database.Collection("document")
+	collection := DocumentModel{}.Collection()
 
 	// 计算skip值
 	skip := (params.Page - 1) * params.PageSize
@@ -52,7 +51,7 @@ func listView(request *goi.Request) any {
 		}
 	}
 
-	ctx, cancel := mongo_db.WithTimeout(10)
+	ctx, cancel := mongodb.WithTimeout(10)
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -64,8 +63,8 @@ func listView(request *goi.Request) any {
 	}
 	defer cursor.Close(ctx)
 
-	var document_list []*DocumentModel
-	if err = cursor.All(ctx, &document_list); err != nil {
+	var documentList []*DocumentModel
+	if err = cursor.All(ctx, &documentList); err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询标准失败",
@@ -83,7 +82,7 @@ func listView(request *goi.Request) any {
 		Code:    http.StatusOK,
 		Message: "",
 		Results: map[string]any{
-			"list":  document_list,
+			"list":  documentList,
 			"total": total,
 			"page":  params.Page,
 			"size":  params.PageSize,
@@ -124,7 +123,9 @@ func createView(request *goi.Request) any {
 	}
 
 	// 创建
-	err = document.Create()
+	err = mongodb.WithTimeoutCtx(5, func(ctx context.Context) error {
+		return document.Create(ctx)
+	})
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -148,7 +149,7 @@ func retrieveView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	database := mongo_db.Database()
+	database := mongodb.Database()
 
 	collection := database.Collection("document")
 
@@ -156,7 +157,7 @@ func retrieveView(request *goi.Request) any {
 	// 执行查询操作
 	document := &DocumentModel{}
 
-	ctx, cancel := mongo_db.WithTimeout(5)
+	ctx, cancel := mongodb.WithTimeout(5)
 	defer cancel()
 	err := collection.FindOne(ctx, filter).Decode(document)
 	if err != nil {
@@ -204,15 +205,14 @@ func updateView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	filter := bson.M{"_id": pk}
-
-	database := mongo_db.Database()
-	collection := database.Collection("document")
-
 	// 执行查询操作
 	instance := &DocumentModel{}
 
-	ctx, cancel := mongo_db.WithTimeout(5)
+	collection := instance.Collection()
+
+	filter := bson.M{"_id": pk}
+
+	ctx, cancel := mongodb.WithTimeout(5)
 	defer cancel()
 	err := collection.FindOne(ctx, filter).Decode(instance)
 	if err != nil {
@@ -243,7 +243,7 @@ func updateView(request *goi.Request) any {
 			Results: nil,
 		}
 	}
-	err = instance.Update(document)
+	err = instance.Update(ctx, document)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -268,7 +268,7 @@ func deleteView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	database := mongo_db.Database()
+	database := mongodb.Database()
 
 	// 获取集合
 	collection := database.Collection("document")
@@ -278,7 +278,7 @@ func deleteView(request *goi.Request) any {
 
 	filter := bson.M{"_id": pk}
 
-	ctx, cancel := mongo_db.WithTimeout(5)
+	ctx, cancel := mongodb.WithTimeout(5)
 	defer cancel()
 	err := collection.FindOne(ctx, filter).Decode(instance)
 	if err != nil {
@@ -296,7 +296,7 @@ func deleteView(request *goi.Request) any {
 		}
 	}
 
-	err = instance.Delete()
+	err = instance.Delete(ctx)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusBadRequest,

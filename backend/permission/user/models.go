@@ -1,6 +1,8 @@
 package user
 
 import (
+	"time"
+
 	"github.com/NeverStopDreamingWang/goi"
 	"github.com/NeverStopDreamingWang/goi/db"
 	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
@@ -26,9 +28,9 @@ type UserModel struct {
 	Email         *string         `field_name:"email" field_type:"TEXT NOT NULL" json:"email"`                        // 邮箱
 	Status        *UserStatusType `field_name:"status" field_type:"INTEGER NOT NULL DEFAULT 1" json:"status"`         // 状态
 	RoleId        *int64          `field_name:"role_id" field_type:"INTEGER NOT NULL" json:"role_id"`                 // 角色ID
-	LastLoginTime *string         `field_name:"last_login_time" field_type:"DATETIME" json:"last_login_time"`         // 最后登录时间
-	CreateTime    *string         `field_name:"create_time" field_type:"DATETIME NOT NULL" json:"create_time"`        // 创建时间
-	UpdateTime    *string         `field_name:"update_time" field_type:"DATETIME" json:"update_time"`                 // 更新时间
+	LastLoginTime *time.Time      `field_name:"last_login_time" field_type:"DATETIME" json:"last_login_time"`         // 最后登录时间
+	CreateTime    *time.Time      `field_name:"create_time" field_type:"DATETIME NOT NULL" json:"create_time"`        // 创建时间
+	UpdateTime    *time.Time      `field_name:"update_time" field_type:"DATETIME" json:"update_time"`                 // 更新时间
 }
 
 // 设置表配置
@@ -93,11 +95,11 @@ func initUser() error {
 }
 
 type UserInfo struct {
-	Id         *int64  `json:"id" bson:"id"`
-	Username   *string `json:"username" bson:"username"`
-	Email      *string `json:"email" bson:"email"`
-	CreateTime *string `json:"create_time" bson:"create_Time"`
-	UpdateTime *string `json:"update_time" bson:"update_Time"`
+	Id         *int64     `json:"id" bson:"id"`
+	Username   *string    `json:"username" bson:"username"`
+	Email      *string    `json:"email" bson:"email"`
+	CreateTime *time.Time `json:"create_time" bson:"create_Time"`
+	UpdateTime *time.Time `json:"update_time" bson:"update_Time"`
 }
 
 func (user UserModel) ToUserInfo() *UserInfo {

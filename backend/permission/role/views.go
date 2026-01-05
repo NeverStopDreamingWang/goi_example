@@ -44,8 +44,8 @@ func listView(request *goi.Request) any {
 		}
 	}
 
-	var role_list []RoleModel
-	err = sqlite3DB.Select(&role_list)
+	var roleList []RoleModel
+	err = sqlite3DB.Select(&roleList)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -60,15 +60,15 @@ func listView(request *goi.Request) any {
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
-			"list":       role_list,
+			"list":       roleList,
 		},
 	}
 }
 
 // 参数验证
 type createValidParams struct {
-	Name      string   `name:"name" type:"string" required:"true"`
-	Menu_List []*int64 `name:"menu_list" type:"slice" required:"true"`
+	Name     string   `name:"name" type:"string" required:"true"`
+	MenuList []*int64 `name:"menu_list" type:"slice" required:"true"`
 }
 
 func createView(request *goi.Request) any {
@@ -83,8 +83,8 @@ func createView(request *goi.Request) any {
 	}
 
 	role := &RoleModel{
-		Name:      &params.Name,
-		Menu_List: params.Menu_List,
+		Name:     &params.Name,
+		MenuList: params.MenuList,
 	}
 	// 参数验证
 	err := role.Validate()
@@ -149,8 +149,8 @@ func retrieveView(request *goi.Request) any {
 
 // 参数验证
 type updateValidParams struct {
-	Name      string   `name:"name" type:"string" required:"true"`
-	Menu_List []*int64 `name:"menu_list" type:"slice"`
+	Name     string   `name:"name" type:"string" required:"true"`
+	MenuList []*int64 `name:"menu_list" type:"slice"`
 }
 
 func updateView(request *goi.Request) any {
@@ -191,9 +191,9 @@ func updateView(request *goi.Request) any {
 	}
 
 	role := &RoleModel{
-		Id:        instance.Id,
-		Name:      &params.Name,
-		Menu_List: params.Menu_List,
+		Id:       instance.Id,
+		Name:     &params.Name,
+		MenuList: params.MenuList,
 	}
 	// 参数验证
 	err = role.Validate()
@@ -294,8 +294,8 @@ func allView(request *goi.Request) any {
 		sqlite3DB.Where("`name` like ?", "%"+*params.Name+"%")
 	}
 
-	var role_list []RoleSelect
-	err := sqlite3DB.Select(&role_list)
+	var roleList []RoleSelect
+	err := sqlite3DB.Select(&roleList)
 	if err != nil {
 		return goi.Data{
 			Code:    http.StatusInternalServerError,
@@ -306,6 +306,6 @@ func allView(request *goi.Request) any {
 	return goi.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: role_list,
+		Results: roleList,
 	}
 }

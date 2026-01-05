@@ -94,11 +94,11 @@ func initMenu() error {
 
 // 角色表
 type RoleModel struct {
-	Id          *int64   `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"` // ID
-	Name        *string  `field_name:"name" field_type:"TEXT NOT NULL" json:"name"`                          // 用户名
-	Create_Time *string  `field_name:"create_time" field_type:"DATETIME NOT NULL" json:"create_time"`        // 创建时间
-	Update_Time *string  `field_name:"update_time" field_type:"DATETIME" json:"update_time"`                 // 更新时间
-	Menu_List   []*int64 `json:"-"`
+	Id         *int64     `field_name:"id" field_type:"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT" json:"id"` // ID
+	Name       *string    `field_name:"name" field_type:"TEXT NOT NULL" json:"name"`                          // 用户名
+	CreateTime *time.Time `field_name:"create_time" field_type:"DATETIME NOT NULL" json:"create_time"`        // 创建时间
+	UpdateTime *time.Time `field_name:"update_time" field_type:"DATETIME" json:"update_time"`                 // 更新时间
+	MenuList   []*int64   `json:"-"`
 }
 
 func (RoleModel) ModelSet() *sqlite3.Settings {
@@ -123,28 +123,28 @@ func initRole() error {
 	}
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 
-	var menu_List []*MenuModel
+	var menuList []*MenuModel
 	sqlite3DB.SetModel(MenuModel{})
-	err := sqlite3DB.Select(&menu_List)
+	err := sqlite3DB.Select(&menuList)
 	if err != nil {
 		return err
 	}
 
 	for _, item := range initRoleList {
 		var (
-			Id          = item[0].(int64)
-			Name        = item[1].(string)
-			Create_Time = goi.GetTime().Format(time.DateTime)
+			Id         = item[0].(int64)
+			Name       = item[1].(string)
+			CreateTime = goi.GetTime()
 		)
 
 		role := RoleModel{
-			Id:          &Id,
-			Name:        &Name,
-			Create_Time: &Create_Time,
-			Update_Time: nil,
+			Id:         &Id,
+			Name:       &Name,
+			CreateTime: &CreateTime,
+			UpdateTime: nil,
 		}
-		for _, menu := range menu_List {
-			role.Menu_List = append(role.Menu_List, menu.Id)
+		for _, menu := range menuList {
+			role.MenuList = append(role.MenuList, menu.Id)
 		}
 		err := role.Validate()
 		if err != nil {
@@ -160,8 +160,8 @@ func initRole() error {
 
 // 角色-菜单表
 type RoleMenuModel struct {
-	Role_Id *int64 `field_name:"role_id" field_type:"INTEGER NOT NULL" json:"role_id"` // 角色ID
-	Menu_Id *int64 `field_name:"menu_id" field_type:"INTEGER NOT NULL" json:"menu_id"` // 菜单ID
+	RoleId *int64 `field_name:"role_id" field_type:"INTEGER NOT NULL" json:"role_id"` // 角色ID
+	MenuId *int64 `field_name:"menu_id" field_type:"INTEGER NOT NULL" json:"menu_id"` // 菜单ID
 }
 
 func (RoleMenuModel) ModelSet() *sqlite3.Settings {

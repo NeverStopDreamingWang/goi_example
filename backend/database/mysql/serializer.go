@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"errors"
-	"time"
 
 	"goi_example/backend/utils"
 
@@ -48,7 +47,7 @@ func (self UserModel) Validate() error {
 
 func (self *UserModel) Create() error {
 	if self.CreateTime == nil {
-		CreateTime := goi.GetTime().Format(time.DateTime)
+		CreateTime := goi.GetTime()
 		self.CreateTime = &CreateTime
 	}
 
@@ -88,7 +87,7 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 		validated_data.Password = &encryptPassword
 	}
 
-	UpdateTime := goi.GetTime().Format(time.DateTime)
+	UpdateTime := goi.GetTime()
 	validated_data.UpdateTime = &UpdateTime
 
 	mysqlDB := db.Connect[*mysql.Engine]("mysql")

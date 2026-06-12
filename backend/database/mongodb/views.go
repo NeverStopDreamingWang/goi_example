@@ -1,17 +1,16 @@
 package mongodb
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
 	"goi_example/backend/utils/mongodb"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // 参数验证
@@ -55,20 +54,20 @@ func listView(request *goi.Request) any {
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询标准失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 	defer cursor.Close(ctx)
 
 	var documentList []*DocumentModel
 	if err = cursor.All(ctx, &documentList); err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询标准失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -78,10 +77,10 @@ func listView(request *goi.Request) any {
 		total = 0
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: map[string]any{
+		Data: map[string]any{
 			"list":  documentList,
 			"total": total,
 			"page":  params.Page,
@@ -107,100 +106,45 @@ func createView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
+	ctx, cancel := mongodb.WithTimeout(5)
+	defer cancel()
+
 	document := &DocumentModel{
 		Name:    params.Name,
 		Content: params.Content,
 	}
 
 	// 参数验证
-	err := document.Validate()
+	err := document.Validate(ctx)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
 	// 创建
-	err = mongodb.WithTimeoutCtx(5, func(ctx context.Context) error {
-		return document.Create(ctx)
-	})
+	err = document.Create(ctx)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "创建成功",
-		Results: document,
+		Data:    document,
 	}
 }
 
 func retrieveView(request *goi.Request) any {
-	var pk primitive.ObjectID // object_id 转换器将字符串转换为 primitive.ObjectID 类型
+	var pk bson.ObjectID // object_id 转换器将字符串转换为 bson.ObjectID 类型
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由转换器自动转换
-	if validationErr != nil {
-		return validationErr.Response()
-	}
-
-	database := mongodb.Database()
-
-	collection := database.Collection("document")
-
-	filter := bson.M{"_id": pk}
-	// 执行查询操作
-	document := &DocumentModel{}
-
-	ctx, cancel := mongodb.WithTimeout(5)
-	defer cancel()
-	err := collection.FindOne(ctx, filter).Decode(document)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return goi.Data{
-				Code:    http.StatusNotFound,
-				Message: "数据不存在",
-				Results: nil,
-			}
-		}
-		return goi.Data{
-			Code:    http.StatusInternalServerError,
-			Message: "查询失败",
-			Results: err.Error(),
-		}
-	}
-
-	return goi.Data{
-		Code:    http.StatusOK,
-		Message: "",
-		Results: document,
-	}
-}
-
-// 参数验证
-type updateValidParams struct {
-	Name    *string `name:"name" type:"string"`
-	Content *string `name:"content" type:"string"`
-}
-
-func updateView(request *goi.Request) any {
-	var pk primitive.ObjectID
-	var params updateValidParams
-	var bodyParams goi.Params
-	var validationErr goi.ValidationError
-
-	validationErr = request.PathParams.Get("pk", &pk)
-	if validationErr != nil {
-		return validationErr.Response()
-	}
-
-	bodyParams = request.BodyParams() // Body 传参
-	validationErr = bodyParams.ParseParams(&params)
 	if validationErr != nil {
 		return validationErr.Response()
 	}
@@ -217,16 +161,72 @@ func updateView(request *goi.Request) any {
 	err := collection.FindOne(ctx, filter).Decode(instance)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusNotFound,
 				Message: "数据不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询失败",
-			Results: err.Error(),
+			Data:    err.Error(),
+		}
+	}
+
+	return response.Data{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    instance,
+	}
+}
+
+// 参数验证
+type updateValidParams struct {
+	Name    *string `name:"name" type:"string"`
+	Content *string `name:"content" type:"string"`
+}
+
+func updateView(request *goi.Request) any {
+	var pk bson.ObjectID
+	var params updateValidParams
+	var bodyParams goi.Params
+	var validationErr goi.ValidationError
+
+	validationErr = request.PathParams.Get("pk", &pk)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+
+	bodyParams = request.BodyParams() // Body 传参
+	validationErr = bodyParams.ParseParams(&params)
+	if validationErr != nil {
+		return validationErr.Response()
+	}
+
+	ctx, cancel := mongodb.WithTimeout(5)
+	defer cancel()
+
+	// 执行查询操作
+	instance := &DocumentModel{}
+
+	collection := instance.Collection()
+
+	filter := bson.M{"_id": pk}
+
+	err := collection.FindOne(ctx, filter).Decode(instance)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return response.Data{
+				Code:    http.StatusNotFound,
+				Message: "数据不存在",
+				Data:    nil,
+			}
+		}
+		return response.Data{
+			Code:    http.StatusInternalServerError,
+			Message: "查询失败",
+			Data:    err.Error(),
 		}
 	}
 
@@ -235,32 +235,32 @@ func updateView(request *goi.Request) any {
 		Name:    params.Name,
 		Content: params.Content,
 	}
-	err = document.Validate()
+	err = document.Validate(ctx)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	err = instance.Update(ctx, document)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "修改成功",
-		Results: instance,
+		Data:    instance,
 	}
 }
 
 func deleteView(request *goi.Request) any {
-	var pk primitive.ObjectID
+	var pk bson.ObjectID
 	var validationErr goi.ValidationError
 
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -268,46 +268,44 @@ func deleteView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	database := mongodb.Database()
-
-	// 获取集合
-	collection := database.Collection("document")
+	ctx, cancel := mongodb.WithTimeout(5)
+	defer cancel()
 
 	// 执行查询操作
 	instance := &DocumentModel{}
 
+	collection := instance.Collection()
+
 	filter := bson.M{"_id": pk}
 
-	ctx, cancel := mongodb.WithTimeout(5)
-	defer cancel()
 	err := collection.FindOne(ctx, filter).Decode(instance)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusNotFound,
 				Message: "数据不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
 	err = instance.Delete(ctx)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "删除成功",
-		Results: nil,
+		Data:    nil,
 	}
 }

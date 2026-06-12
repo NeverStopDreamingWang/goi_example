@@ -2,16 +2,15 @@ package mongodb
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // MongoDB 配置
@@ -40,7 +39,7 @@ func Connect() {
 	clientOptions.SetConnectTimeout(5 * time.Second)
 	clientOptions.SetMaxPoolSize(10)
 
-	MongoDB, err = mongo.Connect(context.Background(), clientOptions)
+	MongoDB, err = mongo.Connect(clientOptions)
 	if err != nil {
 		msg := fmt.Sprintf("MongoDB 连接失败: %v", err)
 		goi.Log.Error(msg)
@@ -70,43 +69,17 @@ func Database() *mongo.Database {
 }
 
 // 事务操作
-func WithTransaction(ctx context.Context, transactionFunc func(sessionContext mongo.SessionContext, args ...any) error, args ...any) error {
-	var err error
-	// 开始事务
+func WithTransaction(ctx context.Context, transactionFunc func(sessionContext context.Context, args ...any) error, args ...any) error {
 	session, err := MongoDB.StartSession()
-	if err != nil {
-		return errors.New("操作数据库错误")
-	}
-	defer session.EndSession(ctx)
-
-	// 开始一个会话并定义事务函数
-	err = mongo.WithSession(ctx, session, func(sessionContext mongo.SessionContext) error {
-		// 开始事务
-		err = session.StartTransaction()
-		if err != nil {
-			return errors.New("操作数据库错误")
-		}
-
-		// 执行一些数据库操作
-		err = transactionFunc(sessionContext, args...)
-		if err != nil {
-			_ = session.AbortTransaction(sessionContext)
-			return err
-		}
-
-		// 提交事务
-		err = session.CommitTransaction(sessionContext)
-		if err != nil {
-			_ = session.AbortTransaction(sessionContext)
-			return errors.New("操作数据库错误")
-		}
-		return nil
-	})
-	// 处理事务错误
 	if err != nil {
 		return err
 	}
-	return nil
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(sessionContext context.Context) (any, error) {
+		return nil, transactionFunc(sessionContext, args...)
+	})
+	return err
 }
 
 func WithTimeout(second int) (context.Context, context.CancelFunc) {

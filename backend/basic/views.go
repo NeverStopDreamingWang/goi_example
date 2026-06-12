@@ -8,7 +8,8 @@ import (
 
 	"goi_example/backend/permission/user"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 func Test1(request *goi.Request) any {
@@ -31,10 +32,10 @@ func TestPathParams(request *goi.Request) any {
 	}
 	goi.Log.DebugF("TestPathParams 参数: %v 参数类型: %T", name, name)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: name,
+		Data:    name,
 	}
 }
 
@@ -67,10 +68,10 @@ func TestQueryParams(request *goi.Request) any {
 
 	return goi.Response{
 		Status: http.StatusOK, // 返回响应状态码
-		Data: goi.Data{ // 响应数据
+		Data: response.Data{ // 响应数据
 			Code:    http.StatusOK, // 返回自定义状态码
 			Message: "",
-			Results: params,
+			Data:    params,
 		},
 	}
 }
@@ -102,10 +103,10 @@ func TestBodyParams(request *goi.Request) any {
 	}
 	goi.Log.DebugF("TestBodyParams 参数: %+v 参数类型: %T", params, params)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: params,
+		Data:    params,
 	}
 }
 
@@ -139,19 +140,19 @@ func TestParamsValid(request *goi.Request) any {
 		// 自定义返回
 		// return goi.Response{
 		// 	Status: http.StatusOK,
-		// 	Data: goi.Data{
+		// 	Data: response.Data{
 		// 		Code: http.StatusBadRequest,
 		// 		Message:    "参数错误",
-		// 		Results:   nil,
+		// 		Data:   nil,
 		// 	},
 		// }
 	}
 	goi.Log.Debug("TestParamsValid", params)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: params,
+		Data:    params,
 	}
 }
 
@@ -164,10 +165,10 @@ func TestConverterParamsStr(request *goi.Request) any {
 	}
 	goi.Log.DebugF("TestConverterParamsStr 参数: %v 参数类型:  %T", name, name)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: name,
+		Data:    name,
 	}
 }
 
@@ -181,10 +182,10 @@ func TestConverterParamsPhone(request *goi.Request) any {
 	}
 	goi.Log.DebugF("TestConverterParamsPhone 参数: %v 参数类型:  %T", phone, phone)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: phone,
+		Data:    phone,
 	}
 }
 
@@ -195,10 +196,10 @@ func TestContext(request *goi.Request) any {
 
 	goi.Log.Debug("requestID", requestID)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: requestID,
+		Data:    requestID,
 	}
 }
 
@@ -214,20 +215,20 @@ func TestContextParams(request *goi.Request) any {
 	}
 	goi.Log.Debug("user", userInfo)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: userInfo,
+		Data:    userInfo,
 	}
 }
 
 // 返回文件
 func TestFile(request *goi.Request) any {
-	absolutePath := filepath.Join(goi.Settings.BASE_DIR, "static/test.txt")
+	absolutePath := filepath.Join(goi.Settings.BaseDir, "static/test.txt")
 	file, err := os.Open(absolutePath)
 	if err != nil {
 		_ = file.Close()
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "读取文件失败",
 		}
@@ -247,9 +248,9 @@ func TestPanic(request *goi.Request) any {
 
 	panic(name)
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: msg,
-		Results: "",
+		Data:    "",
 	}
 }

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 // 参数验证
@@ -37,26 +38,26 @@ func listView(request *goi.Request) any {
 	}
 	total, total_page, err := sqlite3DB.Page(params.Page, params.PageSize)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询角色失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
 	var roleList []RoleModel
 	err = sqlite3DB.Select(&roleList)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询角色失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "ok",
-		Results: map[string]any{
+		Data: map[string]any{
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
@@ -89,26 +90,26 @@ func createView(request *goi.Request) any {
 	// 参数验证
 	err := role.Validate()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	// 添加
 	err = role.Create()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: role,
+		Data:    role,
 	}
 }
 
@@ -127,23 +128,23 @@ func retrieveView(request *goi.Request) any {
 	err := sqlite3DB.Where("`id` = ?", pk).First(role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "角色不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询角色失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: role,
+		Data:    role,
 	}
 }
 
@@ -177,16 +178,16 @@ func updateView(request *goi.Request) any {
 	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "角色不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -198,26 +199,26 @@ func updateView(request *goi.Request) any {
 	// 参数验证
 	err = role.Validate()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	// 修改
 	err = instance.Update(role)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "修改成功",
-		Results: instance,
+		Data:    instance,
 	}
 }
 
@@ -237,31 +238,31 @@ func deleteView(request *goi.Request) any {
 	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "角色不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 	err = instance.Delete()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "删除失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "删除成功",
-		Results: nil,
+		Data:    nil,
 	}
 }
 
@@ -297,15 +298,15 @@ func allView(request *goi.Request) any {
 	var roleList []RoleSelect
 	err := sqlite3DB.Select(&roleList)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询失败",
-			Results: nil,
+			Data:    nil,
 		}
 	}
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: roleList,
+		Data:    roleList,
 	}
 }

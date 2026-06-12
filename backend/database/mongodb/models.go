@@ -5,9 +5,8 @@ import (
 
 	"goi_example/backend/utils/mongodb"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func init() {
@@ -23,11 +22,11 @@ func init() {
 
 // 模型
 type DocumentModel struct {
-	Id         *primitive.ObjectID `bson:"id" json:"id"`
-	Name       *string             `bson:"name" json:"name"`
-	Content    *string             `bson:"content" json:"content"`
-	CreateTime *mongodb.ISODate    `bson:"create_Time" json:"create_time"`
-	UpdateTime *mongodb.ISODate    `bson:"update_Time" json:"update_time"`
+	Id         *bson.ObjectID   `bson:"id" json:"id"`
+	Name       *string          `bson:"name" json:"name"`
+	Content    *string          `bson:"content" json:"content"`
+	CreateTime *mongodb.ISODate `bson:"create_Time" json:"create_time"`
+	UpdateTime *mongodb.ISODate `bson:"update_Time" json:"update_time"`
 }
 
 func initDocument() error {
@@ -61,7 +60,7 @@ func initDocument() error {
 			Content: &Content,
 		}
 		// 参数验证
-		err = document.Validate()
+		err = document.Validate(ctx)
 		if err != nil {
 			return err
 		}

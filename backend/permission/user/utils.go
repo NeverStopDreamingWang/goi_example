@@ -3,8 +3,8 @@ package user
 import (
 	"database/sql"
 
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
 )
 
 import (

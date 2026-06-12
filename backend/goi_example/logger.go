@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 // 默认日志
 func newDefaultLog() *goi.Logger {
 	// 使用默认
-	// return goi.NewLogger(filepath.Join(Server.Settings.BASE_DIR, "logs", "server.log"))
+	// return goi.NewLogger(filepath.Join(Server.Settings.BaseDir, "logs", "server.log"))
 
 	var err error
 
-	path := filepath.Join(Server.Settings.BASE_DIR, "logs", "server.log")
+	path := filepath.Join(Server.Settings.BaseDir, "logs", "server.log")
 	OutDir := filepath.Dir(path) // 检查目录
 	_, err = os.Stat(OutDir)
 	if os.IsNotExist(err) {

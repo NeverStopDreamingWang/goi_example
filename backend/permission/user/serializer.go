@@ -2,15 +2,14 @@ package user
 
 import (
 	"errors"
-	"time"
 
 	"goi_example/backend/permission/role"
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/auth"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/auth"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
 )
 
 func (self UserModel) Validate() error {
@@ -60,7 +59,7 @@ func (self UserModel) Validate() error {
 
 func (self *UserModel) Create() error {
 	if self.CreateTime == nil {
-		CreateTime := goi.GetTime().Format(time.DateTime)
+		CreateTime := goi.GetTime()
 		self.CreateTime = &CreateTime
 	}
 
@@ -100,7 +99,7 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 		validated_data.Password = &encryptPassword
 	}
 
-	UpdateTime := goi.GetTime().Format(time.DateTime)
+	UpdateTime := goi.GetTime()
 	validated_data.UpdateTime = &UpdateTime
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")

@@ -5,9 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // MongoDB 时间类型
@@ -50,14 +48,15 @@ func (self *ISODate) UnmarshalJSON(data []byte) error {
 }
 
 // 实现 bson.ValueMarshaler 接口
-func (self ISODate) MarshalBSONValue() (bsontype.Type, []byte, error) {
-	return bson.MarshalValue(time.Time(self))
+func (self ISODate) MarshalBSONValue() (byte, []byte, error) {
+	typ, data, err := bson.MarshalValue(time.Time(self))
+	return byte(typ), data, err
 }
 
 // 实现 bson.ValueUnmarshaler 接口
-func (self *ISODate) UnmarshalBSONValue(t bsontype.Type, data []byte) error {
+func (self *ISODate) UnmarshalBSONValue(t byte, data []byte) error {
 	var tm time.Time
-	err := bson.UnmarshalValue(t, data, &tm)
+	err := bson.UnmarshalValue(bson.Type(t), data, &tm)
 	if err != nil {
 		return err
 	}
@@ -96,7 +95,7 @@ func (self *ISODate) UnmarshalAny(value any) error {
 }
 
 // ObjectIDList
-type ObjectIDList []*primitive.ObjectID
+type ObjectIDList []*bson.ObjectID
 
 func (self *ObjectIDList) UnmarshalAny(value any) error {
 	switch v := value.(type) {
@@ -107,7 +106,7 @@ func (self *ObjectIDList) UnmarshalAny(value any) error {
 			if !ok {
 				continue
 			}
-			id, err := primitive.ObjectIDFromHex(s)
+			id, err := bson.ObjectIDFromHex(s)
 			if err != nil {
 				return err
 			}

@@ -3,9 +3,10 @@ package role
 import (
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 // 参数验证
@@ -40,7 +41,7 @@ func roleMenuListView(request *goi.Request) any {
 	sqlite3DB.SetModel(MenuModel{})
 	err := sqlite3DB.Select(&menuList)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
 		}
@@ -50,7 +51,7 @@ func roleMenuListView(request *goi.Request) any {
 		sqlite3DB.SetModel(RoleMenuModel{})
 		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.RoleId, menu.Id).Count()
 		if err != nil {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusInternalServerError,
 				Message: "查询数据库错误",
 			}
@@ -59,9 +60,9 @@ func roleMenuListView(request *goi.Request) any {
 	}
 	// 获取树形结构
 	menuList = get_children_menu(menuList)
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: menuList,
+		Data:    menuList,
 	}
 }

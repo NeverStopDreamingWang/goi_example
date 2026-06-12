@@ -10,12 +10,13 @@ import (
 	"goi_example/backend/permission/user"
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func init() {
-	goi_example.ApiRouter.Use(&AuthMiddleWare{})
+	goi_example.ApiRouter.Use(&AuthMiddleware{})
 }
 
 // Token
@@ -23,9 +24,9 @@ type authValidParams struct {
 	Token *string `name:"token" type:"string"`
 }
 
-type AuthMiddleWare struct{}
+type AuthMiddleware struct{}
 
-func (AuthMiddleWare) ProcessRequest(request *goi.Request) any {
+func (AuthMiddleware) ProcessRequest(request *goi.Request) any {
 	// fmt.Println("请求中间件", request.Object.URL)
 
 	// 跳过验证
@@ -61,48 +62,48 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) any {
 	}
 
 	payloads := &utils.Payloads{}
-	err := utils.CheckToken(token, goi.Settings.SECRET_KEY, payloads)
+	err := utils.CheckToken(token, goi.Settings.SecretKey, payloads)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenMalformed) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusUnauthorized,
 				Message: "token 解码错误",
-				Results: err,
+				Data:    err,
 			}
 		} else if errors.Is(err, jwt.ErrTokenExpired) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusUnauthorized,
 				Message: "token 已过期",
-				Results: err,
+				Data:    err,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusUnauthorized,
 			Message: "token 验证失败",
-			Results: err,
+			Data:    err,
 		}
 	}
 	userInfo, err := user.GetUser(payloads.UserId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusUnauthorized,
 				Message: "用户不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusUnauthorized,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
 	if *userInfo.Status == user.DISABLE {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: "当前账号已被禁用",
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
@@ -111,8 +112,8 @@ func (AuthMiddleWare) ProcessRequest(request *goi.Request) any {
 	return nil
 }
 
-func (AuthMiddleWare) ProcessView(request *goi.Request) any { return nil }
+func (AuthMiddleware) ProcessView(request *goi.Request) any { return nil }
 
-func (AuthMiddleWare) ProcessException(request *goi.Request, exception any) any { return nil }
+func (AuthMiddleware) ProcessException(request *goi.Request, exception any) any { return nil }
 
-func (AuthMiddleWare) ProcessResponse(request *goi.Request, response *goi.Response) {}
+func (AuthMiddleware) ProcessResponse(request *goi.Request, response *goi.Response) {}

@@ -7,10 +7,11 @@ import (
 
 	"goi_example/backend/permission/role"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/auth"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/auth"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 type userMenuList struct {
@@ -48,16 +49,16 @@ func profileRetrieveView(request *goi.Request) any {
 	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(&user)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "用户不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -66,16 +67,16 @@ func profileRetrieveView(request *goi.Request) any {
 	err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "角色不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -83,10 +84,10 @@ func profileRetrieveView(request *goi.Request) any {
 	sqlite3DB.SetModel(role.RoleMenuModel{})
 	err = sqlite3DB.Where("role_id = ?", user.RoleId).Select(&roleMenuList)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -97,19 +98,19 @@ func profileRetrieveView(request *goi.Request) any {
 		MenuList[i] = &userMenuList{}
 		err = sqlite3DB.Where("id = ?", roleMenu.MenuId).First(MenuList[i])
 		if err != nil {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusInternalServerError,
 				Message: "查询数据库错误",
-				Results: err.Error(),
+				Data:    err.Error(),
 			}
 		}
 	}
 
 	user.MenuList = get_children_menu(MenuList)
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: user,
+		Data:    user,
 	}
 }
 
@@ -145,18 +146,18 @@ func profileUpdateView(request *goi.Request) any {
 	sqlite3DB.SetModel(UserModel{})
 	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(instance)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "用户不存在",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 	if params.OldPassword != nil {
 		if auth.CheckPassword(*params.OldPassword, *instance.Password) == false {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "旧密码错误",
-				Results: nil,
+				Data:    nil,
 			}
 		}
 	}
@@ -171,24 +172,24 @@ func profileUpdateView(request *goi.Request) any {
 	// 参数验证
 	err = user.Validate()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	// 更新
 	err = instance.Update(user)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "修改成功",
-		Results: instance,
+		Data:    instance,
 	}
 }

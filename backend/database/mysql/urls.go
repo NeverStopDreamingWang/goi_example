@@ -3,7 +3,7 @@ package mysql
 import (
 	"goi_example/backend/database"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 func init() {

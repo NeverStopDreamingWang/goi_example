@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -15,12 +15,12 @@ type ConfigModel struct {
 
 var Config *ConfigModel
 
-func Connect(ENGINE string) *sql.DB {
+func Connect(engine string) *sql.DB {
 	if Config == nil {
 		panic("MySQL 配置未初始化")
 	}
 	var err error
-	sqlite3DB, err := sql.Open(ENGINE, Config.Uri)
+	sqlite3DB, err := sql.Open(engine, Config.Uri)
 	if err != nil {
 		goi.Log.Error(err)
 		panic(err)

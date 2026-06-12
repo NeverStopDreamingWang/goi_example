@@ -3,7 +3,7 @@ package goi_example
 import (
 	"goi_example/server/web"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 var ApiRouter *goi.Router

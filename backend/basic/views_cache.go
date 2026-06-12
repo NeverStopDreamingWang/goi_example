@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 // 参数验证
@@ -34,20 +35,20 @@ func TestCacheSet(request *goi.Request) any {
 	if err != nil {
 		return goi.Response{
 			Status: http.StatusOK,
-			Data: goi.Data{
+			Data: response.Data{
 				Code:    http.StatusInternalServerError,
 				Message: "设置缓存错误",
-				Results: nil,
+				Data:    nil,
 			},
 		}
 	}
 
 	return goi.Response{
 		Status: http.StatusOK,
-		Data: goi.Data{
+		Data: response.Data{
 			Code:    http.StatusOK,
 			Message: "设置成功",
-			Results: nil,
+			Data:    nil,
 		},
 	}
 }
@@ -75,10 +76,10 @@ func TestCacheGet(request *goi.Request) any {
 	if err != nil {
 		return goi.Response{
 			Status: http.StatusOK,
-			Data: goi.Data{
+			Data: response.Data{
 				Code:    http.StatusOK,
 				Message: "key 值不存在",
-				Results: nil,
+				Data:    nil,
 			},
 		}
 	}
@@ -92,10 +93,10 @@ func TestCacheGet(request *goi.Request) any {
 	// }
 	return goi.Response{
 		Status: http.StatusOK,
-		Data: goi.Data{
+		Data: response.Data{
 			Code:    http.StatusOK,
 			Message: "ok",
-			Results: value,
+			Data:    value,
 		},
 	}
 }
@@ -119,20 +120,20 @@ func TestCacheDel(request *goi.Request) any {
 	if !ok {
 		return goi.Response{
 			Status: http.StatusOK,
-			Data: goi.Data{
+			Data: response.Data{
 				Code:    http.StatusOK,
 				Message: "删除成功",
-				Results: nil,
+				Data:    nil,
 			},
 		}
 	}
 	fmt.Println("删除失败!")
 	return goi.Response{
 		Status: http.StatusOK,
-		Data: goi.Data{
+		Data: response.Data{
 			Code:    http.StatusOK,
 			Message: "删除失败",
-			Results: nil,
+			Data:    nil,
 		},
 	}
 }

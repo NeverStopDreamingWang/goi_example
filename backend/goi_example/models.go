@@ -23,12 +23,12 @@ type ConfigModel struct {
 
 // 加载配置
 func (self *ConfigModel) Load() error {
-	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
+	configPath := path.Join(Server.Settings.BaseDir, "config.yaml")
 	return utils.LoadYaml(configPath, self)
 }
 
 // 保存配置
 func (self *ConfigModel) Save() error {
-	configPath := path.Join(Server.Settings.BASE_DIR, "config.yaml")
+	configPath := path.Join(Server.Settings.BaseDir, "config.yaml")
 	return utils.SaveYaml(configPath, self)
 }

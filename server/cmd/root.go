@@ -32,8 +32,7 @@ var HelpCmd = &cobra.Command{
 	Use:   "help",
 	Short: "help 帮助",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		help_txt := fmt.Sprintf(Help)
-		fmt.Print(help_txt)
+		fmt.Print(Help)
 		return nil
 	},
 }

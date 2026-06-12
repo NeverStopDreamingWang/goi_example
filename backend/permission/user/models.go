@@ -3,9 +3,9 @@ package user
 import (
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
 )
 
 func init() {
@@ -41,7 +41,7 @@ func (userModel UserModel) ModelSet() *sqlite3.Settings {
 			AfterHandler:  initUser, // 迁移之后处理函数
 		},
 
-		TABLE_NAME: "tb_user", // 设置表名
+		TableName: "tb_user", // 设置表名
 		// 自定义配置
 		Settings: goi.Params{},
 	}

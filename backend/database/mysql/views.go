@@ -5,9 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/mysql"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/mysql"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 // 参数验证
@@ -49,27 +50,27 @@ func listView(request *goi.Request) any {
 	}
 	total, total_page, err := mysqlDB.Page(params.Page, params.PageSize)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询用户失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
 	var user_list []*UserModel
 	err = mysqlDB.Select(&user_list)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询用户失败",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: map[string]any{
+		Data: map[string]any{
 			"total":      total,
 			"page":       params.Page,
 			"total_page": total_page,
@@ -107,26 +108,26 @@ func createView(request *goi.Request) any {
 	// 参数验证
 	err := user.Validate()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	// 添加
 	err = user.Create()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "添加用户",
-		Results: user,
+		Data:    user,
 	}
 }
 
@@ -145,23 +146,23 @@ func retrieveView(request *goi.Request) any {
 	err := mysqlDB.Where("`id` = ?", pk).First(user)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "用户不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "",
-		Results: user,
+		Data:    user,
 	}
 }
 
@@ -197,16 +198,16 @@ func updateView(request *goi.Request) any {
 	err := mysqlDB.Where("`id` = ?", pk).First(instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return goi.Data{
+			return response.Data{
 				Code:    http.StatusBadRequest,
 				Message: "用户不存在",
-				Results: nil,
+				Data:    nil,
 			}
 		}
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "查询数据库错误",
-			Results: err.Error(),
+			Data:    err.Error(),
 		}
 	}
 
@@ -221,25 +222,25 @@ func updateView(request *goi.Request) any {
 	// 参数验证
 	err = user.Validate()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
 	// 更新
 	err = instance.Update(user)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-			Results: nil,
+			Data:    nil,
 		}
 	}
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "修改成功",
-		Results: instance,
+		Data:    instance,
 	}
 }
 
@@ -258,22 +259,22 @@ func deleteView(request *goi.Request) any {
 	mysqlDB.SetModel(UserModel{})
 	err := mysqlDB.Where("`id` = ?", pk).First(instance)
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "用户不存在",
 		}
 	}
 	err = instance.Delete()
 	if err != nil {
-		return goi.Data{
+		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "删除失败",
 		}
 	}
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "删除成功",
-		Results: nil,
+		Data:    nil,
 	}
 }

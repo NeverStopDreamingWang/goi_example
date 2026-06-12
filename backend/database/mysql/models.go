@@ -5,9 +5,9 @@ import (
 
 	"goi_example/backend/utils/mysqldb"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/mysql"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/mysql"
 )
 
 func init() {
@@ -51,8 +51,8 @@ func (userModel UserModel) ModelSet() *mysql.Settings {
 			AfterHandler:  InitUser, // 迁移之后处理函数
 		},
 
-		TABLE_NAME:      "user_tb",            // 设置表名
-		ENGINE:          "InnoDB",             // 设置存储引擎，默认: InnoDB
+		TableName:       "user_tb",            // 设置表名
+		Engine:          "InnoDB",             // 设置存储引擎，默认: InnoDB
 		AUTO_INCREMENT:  1,                    // 设置自增长起始值
 		DEFAULT_CHARSET: "utf8mb4",            // 设置默认字符集，如: utf8mb4
 		COLLATE:         "utf8mb4_0900_ai_ci", // 设置校对规则，如 utf8mb4_0900_ai_ci;

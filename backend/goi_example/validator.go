@@ -6,16 +6,17 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func init() {
 	// 注册验证器
 	// 手机号
-	goi.RegisterValidate("phone", phoneValidator{})
+	goi.RegisterValidator("phone", phoneValidator{})
 	// 注册验证器
-	goi.RegisterValidate("object_id", objectIdValidator{})
+	goi.RegisterValidator("object_id", objectIdValidator{})
 }
 
 // 自定义参数验证错误
@@ -41,10 +42,10 @@ func (validationErr validationError) Error() string {
 func (validationErr validationError) Response() goi.Response {
 	return goi.Response{
 		Status: http.StatusOK,
-		Data: goi.Data{
+		Data: response.Data{
 			Code:    validationErr.Status,
 			Message: validationErr.Message,
-			Results: nil,
+			Data:    nil,
 		},
 	}
 }
@@ -58,16 +59,16 @@ func (validator phoneValidator) Validate(value any) goi.ValidationError {
 		var reStr = `^(1[3456789]\d{9})$`
 		re := regexp.MustCompile(reStr)
 		if re.MatchString(valueStr) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%!v(MISSING)", value))
+			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
 		}
 	case string:
 		var reStr = `^(1[3456789]\d{9})$`
 		re := regexp.MustCompile(reStr)
 		if re.MatchString(typeValue) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%!v(MISSING)", value))
+			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
 		}
 	default:
-		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%!v(MISSING)", value))
+		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 	}
 	return nil
 }
@@ -79,12 +80,12 @@ func (validator phoneValidator) ToGo(value any) (any, goi.ValidationError) {
 	case string:
 		intValue, err := strconv.Atoi(typeValue)
 		if err != nil {
-			return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%!v(MISSING)", value))
+			return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 		}
 		return intValue, nil
 	default:
 		// 尝试转换为字符串
-		return fmt.Sprintf("%!v(MISSING)", value), nil
+		return fmt.Sprintf("%v", value), nil
 	}
 }
 
@@ -108,7 +109,7 @@ func (validator objectIdValidator) Validate(value any) goi.ValidationError {
 func (validator objectIdValidator) ToGo(value any) (any, goi.ValidationError) {
 	switch typeValue := value.(type) {
 	case string:
-		objectId, err := primitive.ObjectIDFromHex(typeValue)
+		objectId, err := bson.ObjectIDFromHex(typeValue)
 		if err != nil {
 			return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
 		}

@@ -44,13 +44,13 @@ Goi 需要 Go 1.24 或更高版本。
 通过 Go 的模块支持，当你在代码中添加导入时，`go [build|run|test]` 会自动获取必要的依赖：
 
 ```go
-import "github.com/NeverStopDreamingWang/goi"
+import "github.com/NeverStopDreamingWang/goi/v2"
 ```
 
 或者，使用 `go get`：
 
 ```bash
-go get -u github.com/NeverStopDreamingWang/goi
+go get -u github.com/NeverStopDreamingWang/goi/v2
 ```
 
 ### 运行 Goi
@@ -63,7 +63,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 func Ping(request *goi.Request) any {
@@ -281,7 +281,7 @@ package auth_test
 import (
 	"fmt"
 
-	"github.com/NeverStopDreamingWang/goi/auth"
+	"github.com/NeverStopDreamingWang/goi/v2/auth"
 )
 
 func ExampleMakePassword() {
@@ -324,8 +324,8 @@ package goi_test
 import (
 	"errors"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // 手机号
@@ -374,7 +374,7 @@ var usernameConverter = goi.Converter{
 var objectIdConverter = goi.Converter{
 	Regex: `([a-fA-F0-9]{24})`,
 	ToGo: func(value string) (interface{}, error) {
-		objectId, err := primitive.ObjectIDFromHex(value)
+		objectId, err := bson.ObjectIDFromHex(value)
 		if err != nil {
 			return nil, errors.New("ID 错误")
 		}
@@ -419,7 +419,7 @@ package goi_test
 import (
 	"goi_test/goi_test"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 func init() {
@@ -468,8 +468,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // phoneValidator 手机号验证器示例
@@ -527,7 +527,7 @@ func (validator objectIdValidator) Validate(value interface{}) goi.ValidationErr
 func (validator objectIdValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
 	switch typeValue := value.(type) {
 	case string:
-		objectId, err := primitive.ObjectIDFromHex(typeValue)
+		objectId, err := bson.ObjectIDFromHex(typeValue)
 		if err != nil {
 			return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
 		}
@@ -619,9 +619,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
 )
 
 func init() {

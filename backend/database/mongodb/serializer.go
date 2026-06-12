@@ -7,9 +7,8 @@ import (
 	"goi_example/backend/utils"
 	"goi_example/backend/utils/mongodb"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (self DocumentModel) Collection() *mongo.Collection {
@@ -18,7 +17,7 @@ func (self DocumentModel) Collection() *mongo.Collection {
 }
 
 // DocumentModel 模型方法
-func (self DocumentModel) Validate() error {
+func (self DocumentModel) Validate(ctx context.Context) error {
 	// 自定义验证
 	collection := self.Collection()
 
@@ -44,14 +43,13 @@ func (self DocumentModel) Validate() error {
 
 func (self *DocumentModel) Create(ctx context.Context) error {
 	// 生成新的 ObjectID
-	id := primitive.NewObjectID()
+	id := bson.NewObjectID()
 	self.Id = &id
 
 	// 设置创建时间和更新时间
 	if self.CreateTime == nil {
 		CreateTime := mongodb.GetTime()
 		self.CreateTime = &CreateTime
-		self.UpdateTime = &CreateTime
 	}
 
 	// 将结构体编码为 BSON 格式
@@ -77,7 +75,7 @@ func (self *DocumentModel) Update(ctx context.Context, validated_data *DocumentM
 	updateFields := mongodb.UpdateMap(validated_data)
 
 	// 如果没有字段需要更新，直接返回
-	if len(updateFields) == 0 {
+	if len(updateFields) < 1 {
 		return nil
 	}
 
@@ -101,8 +99,6 @@ func (self DocumentModel) Delete(ctx context.Context) error {
 	if self.Id == nil {
 		return errors.New("无效的实例")
 	}
-	ctx, cancel := mongodb.WithTimeout(5)
-	defer cancel()
 
 	collection := self.Collection()
 
@@ -110,5 +106,6 @@ func (self DocumentModel) Delete(ctx context.Context) error {
 	if err != nil {
 		return errors.New("删除失败")
 	}
+
 	return nil
 }

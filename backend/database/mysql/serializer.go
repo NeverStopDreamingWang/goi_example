@@ -5,10 +5,10 @@ import (
 
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi"
-	"github.com/NeverStopDreamingWang/goi/auth"
-	"github.com/NeverStopDreamingWang/goi/db"
-	"github.com/NeverStopDreamingWang/goi/db/mysql"
+	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/auth"
+	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v2/db/mysql"
 )
 
 func (self UserModel) Validate() error {

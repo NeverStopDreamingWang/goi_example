@@ -10,17 +10,17 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 func init() {
-	SSLPath := filepath.Join(Server.Settings.BASE_DIR, "ssl")
-	if Server.Settings.SSL.STATUS == false {
+	SSLPath := filepath.Join(Server.Settings.BaseDir, "ssl")
+	if Server.Settings.SSL.Enabled == false {
 		return
 	}
 
-	_, certErr := os.Stat(Server.Settings.SSL.CERT_PATH)
-	_, keyErr := os.Stat(Server.Settings.SSL.KEY_PATH)
+	_, certErr := os.Stat(Server.Settings.SSL.CertPath)
+	_, keyErr := os.Stat(Server.Settings.SSL.KeyPath)
 	if os.IsNotExist(certErr) || os.IsNotExist(keyErr) {
 		generateCertificate(SSLPath)
 	}

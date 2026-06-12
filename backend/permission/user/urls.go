@@ -3,7 +3,7 @@ package user
 import (
 	"goi_example/backend/permission"
 
-	"github.com/NeverStopDreamingWang/goi"
+	"github.com/NeverStopDreamingWang/goi/v2"
 )
 
 func init() {

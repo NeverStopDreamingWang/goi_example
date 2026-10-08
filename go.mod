@@ -3,7 +3,7 @@ module goi_example
 go 1.24.0
 
 require (
-	github.com/NeverStopDreamingWang/goi/v2 v2.0.0
+	github.com/NeverStopDreamingWang/goi/v2 v2.0.2
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/mattn/go-sqlite3 v1.14.33
@@ -33,5 +33,5 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 )
 
-//replace github.com/NeverStopDreamingWang/goi/v2 v2.0.0 => /home/ubuntu/goi
-//replace github.com/NeverStopDreamingWang/goi/v2 v2.0.0 => D:\private\project\goi
+//replace github.com/NeverStopDreamingWang/goi/v2 v2.0.2 => /home/ubuntu/goi
+//replace github.com/NeverStopDreamingWang/goi/v2 v2.0.2 => D:\private\project\goi

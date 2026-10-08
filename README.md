@@ -50,7 +50,7 @@ import "github.com/NeverStopDreamingWang/goi/v2"
 或者，使用 `go get`：
 
 ```bash
-go get -u github.com/NeverStopDreamingWang/goi/v2
+go get github.com/NeverStopDreamingWang/goi/v2@v2.0.2
 ```
 
 ### 运行 Goi
@@ -64,27 +64,28 @@ import (
 	"net/http"
 
 	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v2/response"
 )
 
 func Ping(request *goi.Request) any {
 	goi.Log.DebugF("Test1")
 
-	return goi.Data{
+	return response.Data{
 		Code:    http.StatusOK,
 		Message: "Hello World",
-		Results: nil,
+		Data:    nil,
 	}
 }
 
 func main() {
 	// 创建 Goi 服务器
-	Server := goi.NewHttpServer()
+	Server := goi.NewHTTPServer()
 	// 网络协议
-	Server.Settings.NET_WORK = "tcp" // 默认 "tcp" 常用网络协议 "tcp"、"tcp4"、"tcp6"、"udp"、"udp4"、"udp6
+	Server.Settings.Network = "tcp" // 默认 "tcp" 常用网络协议 "tcp"、"tcp4"、"tcp6"、"udp"、"udp4"、"udp6"
 	// 监听地址 0.0.0.0
-	Server.Settings.BIND_ADDRESS = "0.0.0.0" // 默认 127.0.0.1
+	Server.Settings.BindAddress = "0.0.0.0" // 默认 127.0.0.1
 	// 监听端口 8080
-	Server.Settings.PORT = 8080
+	Server.Settings.Port = 8080
 
 	// 注册路由
 	Server.Router.Path("ping", "测试接口", goi.ViewSet{GET: Ping})
@@ -625,13 +626,13 @@ import (
 )
 
 func init() {
-	goi.Settings.DATABASES["default"] = &goi.DataBase{
-		ENGINE: "sqlite3",
-		Connect: func(ENGINE string) *sql.DB {
+	goi.Settings.Databases["default"] = &goi.Database{
+		Engine: "sqlite3",
+		Connect: func(engine string) *sql.DB {
 			var DB *sql.DB
 			var err error
-			DataSourceName := filepath.Join(goi.Settings.BASE_DIR, "sqlite3.db")
-			DB, err = sql.Open(ENGINE, DataSourceName)
+			DataSourceName := filepath.Join(goi.Settings.BaseDir, "sqlite3.db")
+			DB, err = sql.Open(engine, DataSourceName)
 			if err != nil {
 				goi.Log.Error(err)
 				panic(err)

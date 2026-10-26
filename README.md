@@ -50,7 +50,7 @@ import "github.com/NeverStopDreamingWang/goi/v2"
 或者，使用 `go get`：
 
 ```bash
-go get github.com/NeverStopDreamingWang/goi/v2@v2.0.2
+go get github.com/NeverStopDreamingWang/goi/v2@v2.1.0
 ```
 
 ### 运行 Goi
@@ -61,7 +61,9 @@ go get github.com/NeverStopDreamingWang/goi/v2@v2.0.2
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/NeverStopDreamingWang/goi/v2"
 	"github.com/NeverStopDreamingWang/goi/v2/response"
@@ -80,6 +82,17 @@ func Ping(request *goi.Request) any {
 func main() {
 	// 创建 Goi 服务器
 	Server := goi.NewHTTPServer()
+	// 创建并注册日志切割任务
+	Server.Log = goi.NewLogger("server.log")
+	goi.Log = Server.Log
+	goi.RegisterOnStartup(Server.Log)
+	// RunServer 完成全部停机流程后，由使用方关闭日志文件
+	defer func() {
+		if err := Server.Log.Close(); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+		}
+	}()
+
 	// 网络协议
 	Server.Settings.Network = "tcp" // 默认 "tcp" 常用网络协议 "tcp"、"tcp4"、"tcp6"、"udp"、"udp4"、"udp6"
 	// 监听地址 0.0.0.0
@@ -233,31 +246,24 @@ func init() {
 
 ## 日志模块
 
-* **支持三种日志**
-    * 信息日志：`Log.INFO_OUT_PATH`
-    * 访问日志：`Log.ACCESS_OUT_PATH`
-    * 错误日志：`Log.ERROR_OUT_PATH ERROR`
-* **日志等级**：是否开启 `Log.DEBUG = true`
-    * DEBUG
-        * 使用：`goi.Debug()` / `goi.DebugF()`
-        * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志、ERROR 错误日志
-    * INFO
-        * 使用：`goi.Info()` / `goi.InfoF()`
-        * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志
-    * WARNING
-        * 使用：`goi.Warning()` / `goi.WarningF()`
-        * 输出：Console（终端）、INFO 信息日志
-    * ERROR
-        * 使用：`goi.Error()` / `goi.ErrorF()`
-        * 输出：Console（终端）、INFO 信息日志、ERROR 错误日志
-    * Log
-        * 使用：`goi.Log()` / `goi.LogF()`
-        * 输出：Console（终端）、INFO 信息日志、ACCESS 访问日志、ERROR 错误日志
+* **日志等级与方法**
+    * DEBUG：`goi.Log.Debug()` / `goi.Log.DebugF()`
+    * INFO：`goi.Log.Info()` / `goi.Log.InfoF()`
+    * WARNING：`goi.Log.Warning()` / `goi.Log.WarningF()`
+    * ERROR：`goi.Log.Error()` / `goi.Log.ErrorF()`
+    * 自定义等级：`goi.Log.Log()` / `goi.Log.LogF()`
+* **Debug 输出**
+    * `goi.Settings.Debug` 为 `true` 时，日志同时输出到控制台和日志文件
+    * `goi.Settings.Debug` 为 `false` 时，跳过 DEBUG 日志，其他等级仍写入日志文件
 * **日志切割**：两种可同时设置满足任意一种即切割
     * 按照日志大小：`Log.SplitSize`
         * 例：`Log.SplitSize = 1024 * 1024`
     * 按照日期格式：`Log.SplitTime = "2006-01-02"`
         * 例：`Log.SplitTime = "2006-01-02"` 设置日期格式
+* **日志关闭**
+    * 框架提供 `Logger.Close()`，具体关闭时机由使用方管理
+    * 日志切割任务通过 `RegisterOnStartup` 注册时，应在 `RunServer()` 返回后关闭日志
+    * 不要在 `OnShutdown` 中关闭默认日志，框架执行回调后仍需要记录数据库关闭和最终停机日志
 
 ## 缓存
 
@@ -457,7 +463,7 @@ func TestPhone(request *goi.Request) any {
 * 包含参数验证
 * 包含参数解析
 
-实现 `goi.Validate` 接口
+实现 `goi.Validator` 接口
 
 ```go
 package goi_test
@@ -575,16 +581,16 @@ type testParamsValidParams struct {
 	Email *Email `name:"email" type:"email" required:"true"`
 }
 
-// ExampleRegisterValidate 展示如何注册和使用自定义验证器
-func ExampleRegisterValidate() {
+// ExampleRegisterValidator 展示如何注册和使用自定义验证器
+func ExampleRegisterValidator() {
 	// 注册手机号验证器
-	goi.RegisterValidate("phone", phoneValidator{})
+	goi.RegisterValidator("phone", phoneValidator{})
 
 	// MongoDB objectId
-	goi.RegisterValidate("object_id", objectIdValidator{})
+	goi.RegisterValidator("object_id", objectIdValidator{})
 
 	// 注册邮箱验证器
-	goi.RegisterValidate("email", emailValidator{})
+	goi.RegisterValidator("email", emailValidator{})
 
 	var validationErr goi.ValidationError
 
@@ -601,8 +607,8 @@ func ExampleRegisterValidate() {
 	fmt.Printf("Email %+v %T\n", params.Email, params.Email)
 }
 
-func TestRegisterValidate(t *testing.T) {
-	ExampleRegisterValidate()
+func TestRegisterValidator(t *testing.T) {
+	ExampleRegisterValidator()
 }
 
 ```

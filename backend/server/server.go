@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -30,12 +31,18 @@ func Start() {
 	printRouteInfo(route, 1)
 
 	// 启动服务
+	defer func() {
+		if err := goi_example.Server.Log.Close(); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 	goi_example.Server.RunServer()
 }
 
 func Stop() {
-	err := goi_example.Server.StopServer()
-	panic(err)
+	if err := goi_example.Server.StopServer(); err != nil {
+		panic(err)
+	}
 }
 
 var replaceStr = "  "

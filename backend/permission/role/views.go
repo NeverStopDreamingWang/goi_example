@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 // 参数验证
@@ -19,6 +19,7 @@ type listValidParams struct {
 }
 
 func listView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -36,7 +37,7 @@ func listView(request *goi.Request) any {
 	if params.Name != "" {
 		sqlite3DB = sqlite3DB.Where("`name` like ?", "%"+params.Name+"%")
 	}
-	total, total_page, err := sqlite3DB.Page(params.Page, params.PageSize)
+	total, total_page, err := sqlite3DB.Page(ctx, params.Page, params.PageSize)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -46,7 +47,7 @@ func listView(request *goi.Request) any {
 	}
 
 	var roleList []RoleModel
-	err = sqlite3DB.Select(&roleList)
+	err = sqlite3DB.Select(ctx, &roleList)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -73,6 +74,7 @@ type createValidParams struct {
 }
 
 func createView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -88,7 +90,7 @@ func createView(request *goi.Request) any {
 		MenuList: params.MenuList,
 	}
 	// 参数验证
-	err := role.Validate()
+	err := role.Validate(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -97,7 +99,7 @@ func createView(request *goi.Request) any {
 		}
 	}
 	// 添加
-	err = role.Create()
+	err = role.Create(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -114,6 +116,7 @@ func createView(request *goi.Request) any {
 }
 
 func retrieveView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -125,7 +128,7 @@ func retrieveView(request *goi.Request) any {
 
 	role := &RoleModel{}
 	sqlite3DB.SetModel(RoleModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(role)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -155,6 +158,7 @@ type updateValidParams struct {
 }
 
 func updateView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -175,7 +179,7 @@ func updateView(request *goi.Request) any {
 
 	instance := &RoleModel{}
 	sqlite3DB.SetModel(RoleModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -197,7 +201,7 @@ func updateView(request *goi.Request) any {
 		MenuList: params.MenuList,
 	}
 	// 参数验证
-	err = role.Validate()
+	err = role.Validate(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -206,7 +210,7 @@ func updateView(request *goi.Request) any {
 		}
 	}
 	// 修改
-	err = instance.Update(role)
+	err = instance.Update(ctx, role)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -223,6 +227,7 @@ func updateView(request *goi.Request) any {
 }
 
 func deleteView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var validationErr goi.ValidationError
 
@@ -235,7 +240,7 @@ func deleteView(request *goi.Request) any {
 
 	instance := &RoleModel{}
 	sqlite3DB.SetModel(RoleModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -250,7 +255,7 @@ func deleteView(request *goi.Request) any {
 			Data:    err.Error(),
 		}
 	}
-	err = instance.Delete()
+	err = instance.Delete(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -277,6 +282,7 @@ type RoleSelect struct {
 }
 
 func allView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params selectValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -296,7 +302,7 @@ func allView(request *goi.Request) any {
 	}
 
 	var roleList []RoleSelect
-	err := sqlite3DB.Select(&roleList)
+	err := sqlite3DB.Select(ctx, &roleList)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,

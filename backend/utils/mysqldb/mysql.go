@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 	_ "github.com/go-sql-driver/mysql"
 )
 

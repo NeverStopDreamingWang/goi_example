@@ -3,6 +3,8 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"goi_example/backend/utils"
 	"goi_example/backend/utils/mongodb"
@@ -28,11 +30,11 @@ func (self DocumentModel) Validate(ctx context.Context) error {
 
 	if self.Name != nil {
 		filter["name"] = self.Name
-		ctx, cancel := mongodb.WithTimeout(5)
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		count, err := collection.CountDocuments(ctx, filter)
 		if err != nil {
-			return errors.New("查询数据库错误")
+			return fmt.Errorf("查询数据库错误: %w", err)
 		}
 		if count > 0 {
 			return errors.New("名称重复")
@@ -89,7 +91,7 @@ func (self *DocumentModel) Update(ctx context.Context, validated_data *DocumentM
 	// 执行更新操作
 	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		return errors.New("修改失败")
+		return fmt.Errorf("修改失败: %w", err)
 	}
 	utils.Update(self, validated_data)
 	return nil
@@ -104,7 +106,7 @@ func (self DocumentModel) Delete(ctx context.Context) error {
 
 	_, err := collection.DeleteOne(ctx, bson.M{"_id": *self.Id})
 	if err != nil {
-		return errors.New("删除失败")
+		return fmt.Errorf("删除失败: %w", err)
 	}
 
 	return nil

@@ -2,11 +2,12 @@
 
 一个用于存放 Goi 示例和教程的资源库。
 
+当前示例依赖 **Goi v3.0.1**（`github.com/NeverStopDreamingWang/goi/v3`）。下面的导入和 ORM 调用均按 v3 接口编写；MongoDB 驱动仍使用其自身的 `go.mongodb.org/mongo-driver/v2`，不要一起替换。
+
 ## 项目结构
 
 ```
 goi_example/
-├── frontend/          # 前端代码
 ├── backend/           # 后端代码
 │   ├── server/        # 服务管理：启动、停止
 │   ├── goi_example/   # 项目配置
@@ -37,23 +38,49 @@ goi_example/
 
 ### 前置条件
 
-Goi 需要 Go 1.24 或更高版本。
+需要 Go 1.24 或更高版本。默认 SQLite 使用 `github.com/mattn/go-sqlite3`，需启用 CGO 并安装可用的 C 编译器。
+
+### 运行本示例项目
+
+在仓库根目录运行。首次使用时，将 `build/config.yaml` 复制为根目录的 `config.yaml`，按需修改端口和数据库配置；已有配置不要覆盖。
+
+Linux/macOS：
+
+```sh
+cp build/config.yaml config.yaml
+export CGO_ENABLED=1
+go mod download
+go run ./server
+```
+
+Windows PowerShell：
+
+```powershell
+Copy-Item build/config.yaml config.yaml
+$env:CGO_ENABLED = "1"
+go mod download
+go run ./server
+```
+
+实际入口为 `server/main.go`，默认命令会调用 `backend/server.Start()`，不需要额外的 `web` 或 `start` 子命令。配置从当前工作目录的 `config.yaml` 读取，所以应在仓库根目录启动。默认端口为 8080，可访问 `http://127.0.0.1:8080/`。
+
+默认配置只启用 SQLite；启用 MySQL、Redis 或 MongoDB 时，需要自行准备服务和凭据，并检查 MySQL 模型的 `Settings.Schema` 与目标数据库是否一致。迁移不会自动创建数据库。本仓库目前仍在包 `init` 中加载配置、注册路由并迁移 SQL 模型，因此导入这些包就可能访问数据库；不要把普通包测试或帮助命令视为完全无副作用的检查。示例密钥与初始化账号仅供本地演示，不应直接用于生产。
 
 ### 获取 Goi
 
 通过 Go 的模块支持，当你在代码中添加导入时，`go [build|run|test]` 会自动获取必要的依赖：
 
 ```go
-import "github.com/NeverStopDreamingWang/goi/v2"
+import "github.com/NeverStopDreamingWang/goi/v3"
 ```
 
 或者，使用 `go get`：
 
 ```bash
-go get github.com/NeverStopDreamingWang/goi/v2@v2.1.0
+go get github.com/NeverStopDreamingWang/goi/v3@v3.0.1
 ```
 
-### 运行 Goi
+### 独立最小示例
 
 一个基础示例：
 
@@ -65,8 +92,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 func Ping(request *goi.Request) any {
@@ -108,7 +135,7 @@ func main() {
 }
 ```
 
-运行代码，使用 `go run` 命令：
+下面命令用于上面的独立 `main.go` 示例；运行本仓库完整项目仍使用 `go run ./server`：
 
 ```bash
 go run main.go
@@ -162,18 +189,18 @@ go run main.go
 * `Router.StaticFileFS(path string, desc string, fileFS embed.FS, defaultPath string)` 注册 `embed.FS` 静态文件路由
     * `path` 路由
     * `desc` 描述
-    * `fileFS` 嵌入文件路径，支持`相对路径`和`绝对路径`
-    * `defaultPath` 嵌入文件默认路径
+    * `fileFS` 嵌入式文件系统，不是磁盘路径
+    * `defaultPath` 文件系统内的相对文件路径
 
 
 * `Router.StaticDirFS(path string, desc string, dirFS embed.FS, basePath string)` 注册 `embed.FS` 静态目录路由
     * `path` 路由
     * `desc` 描述
-    * `dirFS` 嵌入目录路径，支持`相对路径`和`绝对路径`
-    * `basePath` 嵌入文件基础路径
+    * `dirFS` 嵌入式文件系统，不是磁盘路径
+    * `basePath` 文件系统内的相对根目录，空字符串按 `.` 处理
     * 说明:
         - `path` 路径之后自动添加 `/<path:fileName>` 参数
-        - 会自动拼接 `basePath` + `fileName` 为嵌入文件查找路径
+        - 注册时通过 `fs.Sub` 将 `basePath` 锚定为文件系统根目录，再按 `fileName` 查找文件
 
 ### 静态 View 生成器
 
@@ -181,53 +208,61 @@ go run main.go
 
 - `goi.StaticFileView(filePath string) HandlerFunc`
 - `goi.StaticDirView(dirPath http.Dir) HandlerFunc`
-- `goi.StaticFileFSView(fs embed.FS, defaultPath string) HandlerFunc`
-- `goi.StaticDirFSView(fs embed.FS, basePath string) HandlerFunc`
+- `goi.StaticFileFSView(fileFS fs.FS, defaultPath string) HandlerFunc`
+- `goi.StaticDirFSView(dirFS fs.FS) HandlerFunc`
 
-示例：
+目录生成器接收已锚定的 `fs.FS`，不再单独接收基础路径。下面示例中的 `fs.Sub` 需要导入 `io/fs`；`router`、`assets` 分别表示已创建的路由和嵌入资源包。
 
 ```go
 // 单文件
-router.Path("test.txt", "测试文件", goi.ViewSet{GET: goi.StaticFileView("static/test.txt"),})
+router.Path("test.txt", "测试文件", goi.ViewSet{GET: goi.StaticFileView("static/test.txt")})
 
 // 目录（带路由参数 <path:fileName>）
-router.Path("static/<path:fileName>", "静态目录", goi.ViewSet{GET: goi.StaticDirView(http.Dir("static")), })
+router.Path("static/<path:fileName>", "静态目录", goi.ViewSet{GET: goi.StaticDirView(http.Dir("static"))})
 
 // 嵌入式单文件
-router.Path("logo.svg", "静态FS文件", goi.ViewSet{GET: goi.StaticFileFSView(assets.LogoFS, "logo.svg"), })
+router.Path("logo.svg", "静态FS文件", goi.ViewSet{GET: goi.StaticFileFSView(assets.LogoFS, "logo.svg")})
 // 嵌入式目录（带路由参数 <path:fileName>）
-router.Path("assets/<path:fileName>", "静态FS目录", goi.ViewSet{GET: goi.StaticDirFSView(assets.AssetsFS), "assets"})
+assetsRoot, err := fs.Sub(assets.AssetsFS, "assets")
+if err != nil {
+	panic(err)
+}
+router.Path("assets/<path:fileName>", "静态FS目录", goi.ViewSet{GET: goi.StaticDirFSView(assetsRoot)})
 ```
 
 ## 中间件
 
-框架采用接口式中间件，按职责可实现以下任意方法（可选实现）：
+框架使用 `goi.Middleware` 接口，中间件必须实现全部三个方法；不需要处理的阶段可提供空实现：
 
 ```go
-package goi_test
+package middleware
 
 import (
-	"fmt"
-	"net/http"
-	"runtime/debug"
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
-// 中间件
-// MiddleWare 定义中间件接口：
-// - ProcessRequest：请求阶段（顺序执行）；返回 nil 则继续执行，否则直接写入响应返回，内层不再进入
-// - ProcessException：异常阶段（逆序执行）；
-// - ProcessResponse：响应阶段（逆序执行）；常用于追加/修改响应头
-type MiddleWare interface {
-	ProcessRequest(request *Request) any                  // 请求中间件
-	ProcessException(request *Request, exception any) any // 异常中间件
-	ProcessResponse(request *Request, response *Response) // 响应中间件
+type MyMiddleware struct{}
+
+var _ goi.Middleware = (*MyMiddleware)(nil)
+
+func (*MyMiddleware) ProcessRequest(request *goi.Request) any {
+	return nil
+}
+
+func (*MyMiddleware) ProcessException(request *goi.Request, exception any) any {
+	return nil
+}
+
+func (*MyMiddleware) ProcessResponse(request *goi.Request, response *goi.Response) {
 }
 ```
 
 注册：
 
 ```go
-package goi_test
+package middleware
+
+import "goi_example/backend/goi_example"
 
 func init() {
 	goi_example.ApiRouter.Use(&MyMiddleware{})
@@ -267,18 +302,18 @@ func init() {
 
 ## 缓存
 
-* 支持过期策略，默认惰性删除
-    * PERIODIC（定期删除：默认每隔 1s 就随机抽取一些设置了过期时间的 key，检查其是否过期）
-    * SCHEDULED（定时删除：某个设置了过期时间的 key，到期后立即删除）
+* 读取时会检查过期项，也可配置过期清理策略
+    * `goi.Periodic`：定期抽查过期项，默认策略
+    * `goi.Scheduled`：定时调度策略；不承诺到期立即清除，实际时机需按当前版本验证
 * 支持内存淘汰策略
-    * NOEVICTION（直接抛出错误）
-    * ALLKEYS_RANDOM（随机删除-所有键）
-    * ALLKEYS_LRU（删除最近最少使用-所有键）
-    * ALLKEYS_LFU（删除最近最不频繁使用-所有键）
-    * VOLATILE_RANDOM（随机删除-设置过期时间的键）
-    * VOLATILE_LRU（删除最近最少使用-设置过期时间的键）
-    * VOLATILE_LFU（删除最近最不频繁使用-设置过期时间的键）
-    * VOLATILE_TTL（删除即将过期的键-设置过期时间的键）
+    * `goi.NoEviction`（不淘汰已有键，容量不足时抛出错误）
+    * `goi.AllKeysRandom`（随机删除-所有键）
+    * `goi.AllKeysLRU`（删除最近最少使用-所有键）
+    * `goi.AllKeysLFU`（删除最近最不频繁使用-所有键）
+    * `goi.VolatileRandom`（随机删除-设置过期时间的键）
+    * `goi.VolatileLRU`（删除最近最少使用-设置过期时间的键）
+    * `goi.VolatileLFU`（删除最近最不频繁使用-设置过期时间的键）
+    * `goi.VolatileTTL`（删除即将过期的键-设置过期时间的键）
 
 ## 内置 auth 密码生成与验证
 
@@ -288,7 +323,7 @@ package auth_test
 import (
 	"fmt"
 
-	"github.com/NeverStopDreamingWang/goi/v2/auth"
+	"github.com/NeverStopDreamingWang/goi/v3/auth"
 )
 
 func ExampleMakePassword() {
@@ -331,7 +366,7 @@ package goi_test
 import (
 	"errors"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -347,9 +382,9 @@ var emailConverter = goi.Converter{
 	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
-// URL
+// URL：简化示例，不用于完整的 URL 合法性校验
 var urlConverter = goi.Converter{
-	Regex: `(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})`,
+	Regex: `((?:https?://|www\.)[a-zA-Z0-9][a-zA-Z0-9.-]*(?::[0-9]+)?(?:/[^\s]*)?)`,
 	ToGo:  func(value string) (any, error) { return value, nil },
 }
 
@@ -424,14 +459,16 @@ func ExampleRegisterConverter() {
 package goi_test
 
 import (
-	"goi_test/goi_test"
+	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"goi_example/backend/goi_example"
+
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
 func init() {
 	// 创建一个子路由
-	testRouter := goi_test.Server.Router.Include("test/", "测试路由")
+	testRouter := goi_example.Server.Router.Include("test/", "测试路由")
 	{
 		// 注册一个路径 
 		// 类型 my_phone
@@ -475,7 +512,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -615,23 +652,30 @@ func TestRegisterValidator(t *testing.T) {
 
 ## ORM 模型
 
-支持：MySQL、SQLite3
+本仓库演示 MySQL 和 SQLite3，下面以 SQLite3 为例。Goi 还提供其它数据库方言，具体接口与扩展方式见 Goi 仓库的 `db/README.md`。
+
+v3 的迁移、CRUD、统计、分页和事务方法直接接收 `context.Context`；HTTP 业务应传入 `request.Object.Context()`，下面的独立示例使用 `context.Background()`。`Insert`、`Update` 还需显式传入 `skipNil`：`true` 跳过 nil，`false` 将选中的 nil 写为 SQL NULL；普通零值不会被跳过，用 `Fields` 控制写入范围。`Update`、`Delete` 无 WHERE 时会操作整张表，务必检查条件。
+
+`Select` 必须传入切片指针，`First` 使用结构体指针或已初始化的直接 map；map 的键是 Go 字段名，不是数据库列名。以下示例共享测试表，输出仅作示意，取决于数据和执行顺序；初始化中的 `DROP TABLE` 会删除测试表，请勿在业务数据库中运行。
 
 ```go
 package sqlite3_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"path/filepath"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func init() {
+	ctx := context.Background()
 	goi.Settings.Databases["default"] = &goi.Database{
 		Engine: "sqlite3",
 		Connect: func(engine string) *sql.DB {
@@ -654,10 +698,10 @@ func init() {
 	// sqliteDB := sqlite3.Connect("default")
 
 	// 迁移模型前清理旧表(如果存在)
-	_, _ = sqliteDB.Execute("DROP TABLE IF EXISTS user_tb")
+	_, _ = sqliteDB.ExecuteContext(ctx, "DROP TABLE IF EXISTS main.user_tb")
 
 	// 迁移模型
-	sqliteDB.Migrate(UserModel{})
+	sqliteDB.Migrate(ctx, UserModel{})
 
 	// 插入初始测试数据
 	username := "test_user"
@@ -672,7 +716,7 @@ func init() {
 	}
 
 	sqliteDB.SetModel(UserModel{})
-	result, err := sqliteDB.Insert(user)
+	result, err := sqliteDB.Fields("Username", "Password", "CreateTime", "UpdateTime").Insert(ctx, user, true)
 	if err != nil {
 		fmt.Println("插入错误:", err)
 		return
@@ -703,7 +747,8 @@ func (userModel UserModel) ModelSet() *sqlite3.Settings {
 			AfterHandler:  InitUser, // 迁移之后处理函数
 		},
 
-		TABLE_NAME: "user_tb", // 设置表名
+		Schema:    "main",    // SQLite 命名空间；附加数据库需预先 ATTACH
+		TableName: "user_tb", // 设置表名
 
 		// 自定义配置
 		Settings: goi.Params{
@@ -716,6 +761,7 @@ func (userModel UserModel) ModelSet() *sqlite3.Settings {
 
 // 初始化用户
 func InitUser() error {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	var (
@@ -734,7 +780,7 @@ func InitUser() error {
 		UpdateTime: nil,
 	}
 	sqliteDB.SetModel(UserModel{})
-	_, err = sqliteDB.Insert(&user)
+	_, err = sqliteDB.Insert(ctx, &user, false)
 	if err != nil {
 		return err
 	}
@@ -743,16 +789,19 @@ func InitUser() error {
 }
 
 func ExampleEngine_Migrate() {
+	ctx := context.Background()
 	// 连接数据库
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 迁移模型
-	sqliteDB.Migrate("test_db", UserModel{})
+	// Schema 在 UserModel.ModelSet 返回的 Settings.Schema 中指定，不再作为 Migrate 参数。
+	sqliteDB.Migrate(ctx, UserModel{})
 
 	// Output:
 }
 
 func ExampleEngine_Insert() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 准备测试数据
@@ -768,7 +817,7 @@ func ExampleEngine_Insert() {
 
 	// 设置模型并插入数据
 	sqliteDB.SetModel(UserModel{})
-	result, err := sqliteDB.Insert(user)
+	result, err := sqliteDB.Fields("Username", "Password", "CreateTime").Insert(ctx, user, true)
 	if err != nil {
 		fmt.Println("插入错误:", err)
 		return
@@ -782,26 +831,27 @@ func ExampleEngine_Insert() {
 }
 
 func ExampleEngine_Where() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	var users []*UserModel
 	sqliteDB.SetModel(UserModel{})
 
-	// Where 返回当前实例的副本指针
+	// Where 返回独立条件副本，需接收返回值或继续链式调用
 	// 简单条件
 	sqliteDB = sqliteDB.Where("username = ?", "test_user")
 
 	// AND条件
-	sqliteDB = sqliteDB.Where("create_time IS NULL")
+	sqliteDB = sqliteDB.Where("create_time IS NOT NULL")
 
 	// 支持 IN 参数值为 Slice 或 Array
 	testUsers := []string{"test_user", "test_user_1"}
 	sqliteDB = sqliteDB.Where("username IN ?", testUsers)
 
 	// LIKE条件
-	sqliteDB = sqliteDB.Where("username LIKE ?", "where_test%")
+	sqliteDB = sqliteDB.Where("username LIKE ?", "test_%")
 
-	err := sqliteDB.Select(&users)
+	err := sqliteDB.Select(ctx, &users)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -818,6 +868,7 @@ func ExampleEngine_Where() {
 }
 
 func ExampleEngine_Select() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 查询多条记录 Select 支持 map 以及 结构体
@@ -825,7 +876,7 @@ func ExampleEngine_Select() {
 	var users []*UserModel
 
 	sqliteDB.SetModel(UserModel{})
-	err := sqliteDB.Select(users)
+	err := sqliteDB.Select(ctx, &users)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -840,19 +891,20 @@ func ExampleEngine_Select() {
 }
 
 func ExampleEngine_Page() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 分页查询
 	var users []*UserModel
 
 	sqliteDB.SetModel(UserModel{})
-	total, totalPages, err := sqliteDB.Page(2, 5) // 第2页,每页5条
+	total, totalPages, err := sqliteDB.Page(ctx, 2, 5) // 第2页,每页5条
 	if err != nil {
 		fmt.Println("分页错误:", err)
 		return
 	}
 
-	err = sqliteDB.Select(&users)
+	err = sqliteDB.Select(ctx, &users)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -869,15 +921,16 @@ func ExampleEngine_Page() {
 }
 
 func ExampleEngine_First() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 查询单条记录 First 支持 map 以及 结构体
-	// var user map[string]any
-	var user *UserModel
+	// 使用 map 时先 make，再把 map 本身传给 First。
+	var user UserModel
 
 	sqliteDB.SetModel(UserModel{})
 	sqliteDB = sqliteDB.Where("username = ?", "test_user")
-	err := sqliteDB.First(user)
+	err := sqliteDB.First(ctx, &user)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -890,28 +943,32 @@ func ExampleEngine_First() {
 }
 
 func ExampleEngine_Fields() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 指定查询字段
-	var user map[string]any
+	user := make(map[string]*string)
 
 	sqliteDB.SetModel(UserModel{})
 
 	// Fields 返回当前实例的副本指针
 	sqliteDB = sqliteDB.Fields("Username", "CreateTime")
-	err := sqliteDB.Select(&user)
+	// First 写入单条 map；Select 则需要 *[]map[string]any 等切片指针。
+	err := sqliteDB.Where("username = ?", "test_user").First(ctx, user)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
 	}
 
-	fmt.Println("用户名:", user["username"])
+	// map 键使用 Go 字段名；值类型由模型字段决定，这里是 *string。
+	fmt.Println("用户名:", *user["Username"])
 
 	// Output:
-	// 用户名: user_1
+	// 用户名: test_user
 }
 
 func ExampleEngine_Update() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 准备更新数据
@@ -923,7 +980,7 @@ func ExampleEngine_Update() {
 	// 更新记录
 	sqliteDB.SetModel(UserModel{})
 	sqliteDB = sqliteDB.Where("username = ?", "test_user")
-	result, err := sqliteDB.Update(updateUser)
+	result, err := sqliteDB.Fields("Password").Update(ctx, updateUser, false)
 	if err != nil {
 		fmt.Println("更新错误:", err)
 		return
@@ -937,13 +994,14 @@ func ExampleEngine_Update() {
 }
 
 func ExampleEngine_Delete() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	sqliteDB.SetModel(UserModel{})
 	sqliteDB = sqliteDB.Where("username = ?", "test_user")
 
 	// 删除记录
-	result, err := sqliteDB.Delete()
+	result, err := sqliteDB.Delete(ctx)
 	if err != nil {
 		fmt.Println("删除错误:", err)
 		return
@@ -957,33 +1015,34 @@ func ExampleEngine_Delete() {
 }
 
 func ExampleEngine_GroupBy() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 使用分组查询
 	type Result struct {
-		Date  *string `field_name:"date" json:"date"`
-		Count *int    `field_name:"count" json:"count"`
+		CreateTime *string `json:"create_time"`
 	}
 
 	var results []*Result
 	sqliteDB.SetModel(UserModel{})
-	// GroupBy 返回当前实例的副本指针
-	sqliteDB = sqliteDB.GroupBy("DATE(create_time)")
-	err := sqliteDB.Select(&results)
+	// GroupBy 接收列名，Fields 接收 Go 字段名，均返回副本指针。
+	sqliteDB = sqliteDB.Fields("CreateTime").GroupBy("create_time")
+	err := sqliteDB.Select(ctx, &results)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
 	}
 
 	for _, result := range results {
-		fmt.Printf("日期: %s, 注册人数: %d\n", *result.Date, *result.Count)
+		fmt.Printf("创建时间: %s\n", *result.CreateTime)
 	}
 
 	// Output:
-	// 日期: 2024-03-21, 注册人数: 15
+	// 创建时间: 2024-03-21 10:00:00
 }
 
 func ExampleEngine_OrderBy() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 使用排序查询
@@ -992,7 +1051,7 @@ func ExampleEngine_OrderBy() {
 
 	// OrderBy 返回当前实例的副本指针
 	sqliteDB = sqliteDB.OrderBy("-create_time")
-	err := sqliteDB.Select(&users)
+	err := sqliteDB.Select(ctx, &users)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -1007,11 +1066,12 @@ func ExampleEngine_OrderBy() {
 }
 
 func ExampleEngine_Count() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 统计记录数
 	sqliteDB.SetModel(UserModel{})
-	count, err := sqliteDB.Count()
+	count, err := sqliteDB.Count(ctx)
 	if err != nil {
 		fmt.Println("统计错误:", err)
 		return
@@ -1024,11 +1084,12 @@ func ExampleEngine_Count() {
 }
 
 func ExampleEngine_Exists() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	sqliteDB.SetModel(UserModel{})
 	// 检查记录是否存在
-	exists, err := sqliteDB.Where("username = ?", "test_user").Exists()
+	exists, err := sqliteDB.Where("username = ?", "test_user").Exists(ctx)
 	if err != nil {
 		fmt.Println("查询错误:", err)
 		return
@@ -1041,10 +1102,11 @@ func ExampleEngine_Exists() {
 }
 
 func ExampleEngine_WithTransaction() {
+	ctx := context.Background()
 	sqliteDB := db.Connect[*sqlite3.Engine]("default")
 
 	// 事务
-	err := sqliteDB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
+	err := sqliteDB.WithTransaction(ctx, func(engine *sqlite3.Engine, args ...any) error {
 		// 准备测试数据
 		username1 := "transaction_user1"
 		username2 := "transaction_user2"
@@ -1058,7 +1120,7 @@ func ExampleEngine_WithTransaction() {
 			CreateTime: &now,
 		}
 		engine.SetModel(UserModel{})
-		_, err := engine.Insert(user1)
+		_, err := engine.Fields("Username", "Password", "CreateTime").Insert(ctx, user1, true)
 		if err != nil {
 			return err
 		}
@@ -1069,14 +1131,14 @@ func ExampleEngine_WithTransaction() {
 			Password:   &password,
 			CreateTime: &now,
 		}
-		_, err = engine.Insert(user2)
+		_, err = engine.Fields("Username", "Password", "CreateTime").Insert(ctx, user2, true)
 		if err != nil {
 			return err
 		}
 
 		return nil
 	})
-	// 事务执行的错误，发生错误时会自动回滚
+	// 错误向外返回时由最外层回滚；嵌套 WithTransaction 复用外层事务，不创建保存点。
 	if err != nil {
 		fmt.Println("事务执行错误:", err)
 		return
@@ -1089,3 +1151,5 @@ func ExampleEngine_WithTransaction() {
 }
 
 ```
+
+`GroupBy` 默认把输入当作列标识符引用，不能直接把 `DATE(create_time)` 或 `COUNT(*)` 当作字段传入。复杂表达式和聚合查询请使用 `QueryContext` 编写明确的 SQL，再通过 `Rows.Scan` 读取结果，并关闭结果集、检查 `Rows.Err()`。`Migrate` 只创建不存在的表，不会修改已有表结构；SQLite 的 `Schema` 仅支持 `main`、`temp` 或已通过 ATTACH 建立的数据库名称。

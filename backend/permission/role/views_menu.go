@@ -3,10 +3,10 @@ package role
 import (
 	"net/http"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 // 参数验证
@@ -25,6 +25,7 @@ type menuListModel struct {
 }
 
 func roleMenuListView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params roleMenuListValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -39,7 +40,7 @@ func roleMenuListView(request *goi.Request) any {
 
 	var menuList []*menuListModel
 	sqlite3DB.SetModel(MenuModel{})
-	err := sqlite3DB.Select(&menuList)
+	err := sqlite3DB.Select(ctx, &menuList)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -49,7 +50,7 @@ func roleMenuListView(request *goi.Request) any {
 
 	for _, menu := range menuList {
 		sqlite3DB.SetModel(RoleMenuModel{})
-		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.RoleId, menu.Id).Count()
+		count, err := sqlite3DB.Where("role_id = ? and menu_id = ?", params.RoleId, menu.Id).Count(ctx)
 		if err != nil {
 			return response.Data{
 				Code:    http.StatusInternalServerError,

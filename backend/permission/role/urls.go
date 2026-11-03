@@ -3,7 +3,7 @@ package role
 import (
 	"goi_example/backend/permission"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
 func init() {

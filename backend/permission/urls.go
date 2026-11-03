@@ -3,7 +3,7 @@ package permission
 import (
 	"goi_example/backend/goi_example"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
 var PermissionRouter *goi.Router

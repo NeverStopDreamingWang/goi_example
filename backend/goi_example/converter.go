@@ -3,7 +3,7 @@ package goi_example
 import (
 	"errors"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

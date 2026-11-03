@@ -8,8 +8,8 @@ import (
 
 	"goi_example/backend/permission/user"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 func Test1(request *goi.Request) any {
@@ -227,7 +227,6 @@ func TestFile(request *goi.Request) any {
 	absolutePath := filepath.Join(goi.Settings.BaseDir, "static/test.txt")
 	file, err := os.Open(absolutePath)
 	if err != nil {
-		_ = file.Close()
 		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "读取文件失败",
@@ -247,10 +246,4 @@ func TestPanic(request *goi.Request) any {
 	goi.Log.Debug("TestPanic", msg)
 
 	panic(name)
-
-	return response.Data{
-		Code:    http.StatusOK,
-		Message: msg,
-		Data:    "",
-	}
 }

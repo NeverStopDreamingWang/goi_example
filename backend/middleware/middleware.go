@@ -10,8 +10,8 @@ import (
 	"goi_example/backend/permission/user"
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -83,7 +83,7 @@ func (AuthMiddleware) ProcessRequest(request *goi.Request) any {
 			Data:    err,
 		}
 	}
-	userInfo, err := user.GetUser(payloads.UserId)
+	userInfo, err := user.GetUser(request.Object.Context(), payloads.UserId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{

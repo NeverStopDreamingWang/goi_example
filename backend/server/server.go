@@ -8,7 +8,7 @@ import (
 
 	"goi_example/backend/goi_example"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 
 	// 注册app
 	_ "goi_example/backend/auth"             // 认证

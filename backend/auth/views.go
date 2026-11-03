@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 
 	"goi_example/backend/permission/user"
 	"goi_example/backend/utils"
 	"goi_example/backend/utils/captcha"
 
-	"github.com/NeverStopDreamingWang/goi/v2/auth"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
+	"github.com/NeverStopDreamingWang/goi/v3/auth"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
 )
 
 func captchaView(request *goi.Request) any {
@@ -46,6 +46,7 @@ type loginParams struct {
 }
 
 func loginView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params loginParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -81,9 +82,9 @@ func loginView(request *goi.Request) any {
 	userObject := user.UserModel{}
 	sqlite3DB.SetModel(user.UserModel{})
 	if params.Username != nil && *params.Username != "" {
-		err = sqlite3DB.Where("username=?", params.Username).First(&userObject)
+		err = sqlite3DB.Where("username=?", params.Username).First(ctx, &userObject)
 	} else if params.Email != nil && *params.Email != "" {
-		err = sqlite3DB.Where("email=?", params.Email).First(&userObject)
+		err = sqlite3DB.Where("email=?", params.Email).First(ctx, &userObject)
 	} else {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -140,7 +141,7 @@ func loginView(request *goi.Request) any {
 
 	// 更新最后登录时间
 	lastLoginTime := goi.GetTime()
-	err = userObject.Update(&user.UserModel{
+	err = userObject.Update(ctx, &user.UserModel{
 		LastLoginTime: &lastLoginTime,
 	})
 	if err != nil {

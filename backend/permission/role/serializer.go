@@ -1,17 +1,18 @@
 package role
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
 )
 
-func (self RoleModel) Validate() error {
+func (self RoleModel) Validate(ctx context.Context) error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)
 
@@ -20,7 +21,7 @@ func (self RoleModel) Validate() error {
 	}
 
 	if self.Name != nil {
-		flag, err := sqlite3DB.Where("`name` = ?", self.Name).Exists()
+		flag, err := sqlite3DB.Where("`name` = ?", self.Name).Exists(ctx)
 		if err != nil {
 			return errors.New("查询数据库错误")
 		}
@@ -31,7 +32,7 @@ func (self RoleModel) Validate() error {
 	return nil
 }
 
-func (self *RoleModel) Create() error {
+func (self *RoleModel) Create(ctx context.Context) error {
 	if self.CreateTime == nil {
 		CreateTime := goi.GetTime()
 		self.CreateTime = &CreateTime
@@ -43,9 +44,9 @@ func (self *RoleModel) Create() error {
 	}
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	err = sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
+	err = sqlite3DB.WithTransaction(ctx, func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
-		result, err := engine.Insert(self)
+		result, err := engine.Insert(ctx, self, true)
 		if err != nil {
 			return errors.New("添加角色错误")
 		}
@@ -60,7 +61,7 @@ func (self *RoleModel) Create() error {
 				RoleId: self.Id,
 				MenuId: menu_id,
 			}
-			err = roleMenu.Create(engine)
+			err = roleMenu.Create(ctx, engine)
 			if err != nil {
 				return err
 			}
@@ -70,14 +71,14 @@ func (self *RoleModel) Create() error {
 	return err
 }
 
-func (self *RoleModel) Update(validated_data *RoleModel) error {
+func (self *RoleModel) Update(ctx context.Context, validated_data *RoleModel) error {
 	UpdateTime := goi.GetTime()
 	validated_data.UpdateTime = &UpdateTime
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
+	err := sqlite3DB.WithTransaction(ctx, func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
-		_, err := engine.Where("`id` = ?", self.Id).Update(validated_data)
+		_, err := engine.Where("`id` = ?", self.Id).Update(ctx, validated_data, true)
 		if err != nil {
 			return errors.New("修改角色错误")
 		}
@@ -87,7 +88,7 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 		}
 
 		engine.SetModel(RoleMenuModel{})
-		_, err = engine.Where("`role_id` = ?", self.Id).Delete()
+		_, err = engine.Where("`role_id` = ?", self.Id).Delete(ctx)
 		if err != nil {
 			return errors.New("修改角色错误")
 		}
@@ -96,7 +97,7 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 				RoleId: self.Id,
 				MenuId: menu_id,
 			}
-			err = roleMenu.Create(engine)
+			err = roleMenu.Create(ctx, engine)
 			if err != nil {
 				return err
 			}
@@ -107,18 +108,18 @@ func (self *RoleModel) Update(validated_data *RoleModel) error {
 	return err
 }
 
-func (self RoleModel) Delete() error {
+func (self RoleModel) Delete(ctx context.Context) error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 
-	err := sqlite3DB.WithTransaction(func(engine *sqlite3.Engine, args ...any) error {
+	err := sqlite3DB.WithTransaction(ctx, func(engine *sqlite3.Engine, args ...any) error {
 		engine.SetModel(self)
-		_, err := engine.Where("`id` = ?", self.Id).Delete()
+		_, err := engine.Where("`id` = ?", self.Id).Delete(ctx)
 		if err != nil {
 			return err
 		}
 
 		engine.SetModel(RoleMenuModel{})
-		_, err = engine.Where("`role_id` = ?", self.Id).Delete()
+		_, err = engine.Where("`role_id` = ?", self.Id).Delete(ctx)
 		if err != nil {
 			return errors.New("删除角色错误")
 		}
@@ -127,14 +128,14 @@ func (self RoleModel) Delete() error {
 	return err
 }
 
-func (self *RoleMenuModel) Create(engine *sqlite3.Engine) error {
+func (self *RoleMenuModel) Create(ctx context.Context, engine *sqlite3.Engine) error {
 	err := sqlite3.Validate(self, true)
 	if err != nil {
 		return err
 	}
 	// 关联角色权限
 	engine.SetModel(self)
-	flag, err := engine.Where("`role_id`=? and `menu_id`=?", self.RoleId, self.MenuId).Exists()
+	flag, err := engine.Where("`role_id`=? and `menu_id`=?", self.RoleId, self.MenuId).Exists(ctx)
 	if err != nil && errors.Is(err, sql.ErrNoRows) == false {
 		return errors.New("添加角色菜单错误")
 	}
@@ -142,7 +143,7 @@ func (self *RoleMenuModel) Create(engine *sqlite3.Engine) error {
 		return nil
 	}
 	engine.SetModel(self)
-	_, err = engine.Insert(self)
+	_, err = engine.Insert(ctx, self, true)
 	if err != nil {
 		return errors.New("添加角色菜单错误")
 	}

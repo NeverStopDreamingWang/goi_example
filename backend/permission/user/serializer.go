@@ -1,18 +1,19 @@
 package user
 
 import (
+	"context"
 	"errors"
 
 	"goi_example/backend/permission/role"
 	"goi_example/backend/utils"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/auth"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/auth"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
 )
 
-func (self UserModel) Validate() error {
+func (self UserModel) Validate(ctx context.Context) error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)
 
@@ -21,7 +22,7 @@ func (self UserModel) Validate() error {
 	}
 
 	if self.Username != nil {
-		flag, err := sqlite3DB.Where("`username` = ?", self.Username).Exists()
+		flag, err := sqlite3DB.Where("`username` = ?", self.Username).Exists(ctx)
 		if err != nil {
 			return errors.New("查询数据库错误")
 		}
@@ -30,7 +31,7 @@ func (self UserModel) Validate() error {
 		}
 	}
 	if self.Email != nil {
-		flag, err := sqlite3DB.Where("`email` = ?", self.Email).Exists()
+		flag, err := sqlite3DB.Where("`email` = ?", self.Email).Exists(ctx)
 		if err != nil {
 			return errors.New("查询数据库错误")
 		}
@@ -46,7 +47,7 @@ func (self UserModel) Validate() error {
 	if self.RoleId != nil {
 		// 验证角色是否存在
 		sqlite3DB.SetModel(role.RoleModel{})
-		flag, err := sqlite3DB.Where("`id` = ?", self.RoleId).Exists()
+		flag, err := sqlite3DB.Where("`id` = ?", self.RoleId).Exists(ctx)
 		if err != nil {
 			return errors.New("查询数据库错误")
 		}
@@ -57,7 +58,7 @@ func (self UserModel) Validate() error {
 	return nil
 }
 
-func (self *UserModel) Create() error {
+func (self *UserModel) Create(ctx context.Context) error {
 	if self.CreateTime == nil {
 		CreateTime := goi.GetTime()
 		self.CreateTime = &CreateTime
@@ -77,7 +78,7 @@ func (self *UserModel) Create() error {
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)
-	result, err := sqlite3DB.Insert(self)
+	result, err := sqlite3DB.Insert(ctx, self, true)
 	if err != nil {
 		return errors.New("添加用户错误")
 	}
@@ -89,7 +90,7 @@ func (self *UserModel) Create() error {
 	return nil
 }
 
-func (self *UserModel) Update(validated_data *UserModel) error {
+func (self *UserModel) Update(ctx context.Context, validated_data *UserModel) error {
 	if validated_data.Password != nil {
 		// 密码加密
 		encryptPassword, err := auth.MakePassword(*validated_data.Password)
@@ -105,7 +106,7 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)
 
-	_, err := sqlite3DB.Where("`id` = ?", self.Id).Update(validated_data)
+	_, err := sqlite3DB.Where("`id` = ?", self.Id).Update(ctx, validated_data, true)
 	if err != nil {
 		return errors.New("修改用户错误")
 	}
@@ -113,10 +114,10 @@ func (self *UserModel) Update(validated_data *UserModel) error {
 	return nil
 }
 
-func (self UserModel) Delete() error {
+func (self UserModel) Delete(ctx context.Context) error {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(self)
-	_, err := sqlite3DB.Where("`id` = ?", self.Id).Delete()
+	_, err := sqlite3DB.Where("`id` = ?", self.Id).Delete(ctx)
 	if err != nil {
 		return errors.New("删除用户错误")
 	}

@@ -1,13 +1,14 @@
 package mysql
 
 import (
+	"context"
 	"time"
 
 	"goi_example/backend/utils/mysqldb"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/mysql"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/mysql"
 )
 
 func init() {
@@ -16,7 +17,7 @@ func init() {
 	}
 	// MySQL 数据库
 	mysqlDB := db.Connect[*mysql.Engine]("mysql")
-	mysqlDB.Migrate("test_goi", UserModel{})
+	mysqlDB.Migrate(context.Background(), UserModel{})
 }
 
 type UserStatusType uint16
@@ -51,6 +52,7 @@ func (userModel UserModel) ModelSet() *mysql.Settings {
 			AfterHandler:  InitUser, // 迁移之后处理函数
 		},
 
+		Schema:          "test_goi",           // 设置数据库名称
 		TableName:       "user_tb",            // 设置表名
 		Engine:          "InnoDB",             // 设置存储引擎，默认: InnoDB
 		AUTO_INCREMENT:  1,                    // 设置自增长起始值
@@ -77,6 +79,7 @@ func (userModel UserModel) ModelSet() *mysql.Settings {
 
 // 初始化数据
 func InitUser() error {
+	ctx := context.Background()
 	initUserList := [][]any{
 		{"admin", "admin", "admin@qq.com", UserStatusType(1)},
 	}
@@ -84,7 +87,7 @@ func InitUser() error {
 
 	mysqlDB := db.Connect[*mysql.Engine]("mysql")
 	mysqlDB.SetModel(UserModel{})
-	total, err := mysqlDB.Count()
+	total, err := mysqlDB.Count(ctx)
 	if err != nil {
 		return err
 	}
@@ -96,10 +99,10 @@ func InitUser() error {
 
 	for _, item := range initUserList {
 		var (
-			Username = item[1].(string)
-			Password = item[2].(string)
-			Email    = item[3].(string)
-			Status   = item[4].(UserStatusType)
+			Username = item[0].(string)
+			Password = item[1].(string)
+			Email    = item[2].(string)
+			Status   = item[3].(UserStatusType)
 		)
 		user := &UserModel{
 			Username: &Username,
@@ -108,12 +111,12 @@ func InitUser() error {
 			Status:   &Status,
 		}
 		// 参数验证
-		err = user.Validate()
+		err = user.Validate(ctx)
 		if err != nil {
 			return err
 		}
 		// 添加
-		err = user.Create()
+		err = user.Create(ctx)
 		if err != nil {
 			return err
 		}

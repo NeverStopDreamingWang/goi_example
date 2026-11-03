@@ -1,16 +1,17 @@
 package user
 
 import (
+	"context"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
 )
 
 func init() {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	sqlite3DB.Migrate(UserModel{})
+	sqlite3DB.Migrate(context.Background(), UserModel{})
 }
 
 type UserStatusType uint16
@@ -51,13 +52,14 @@ func (userModel UserModel) ModelSet() *sqlite3.Settings {
 
 // 初始化数据
 func initUser() error {
+	ctx := context.Background()
 	initUserList := [][]any{
 		{"admin", "admin", "admin@qq.com", UserStatusType(1), int64(1), int64(1)},
 	}
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(UserModel{})
-	total, err := sqlite3DB.Count()
+	total, err := sqlite3DB.Count(ctx)
 	if err != nil {
 		return err
 	}
@@ -81,12 +83,12 @@ func initUser() error {
 			RoleId:   &RoleId,
 		}
 		// 参数验证
-		err = user.Validate()
+		err = user.Validate(ctx)
 		if err != nil {
 			return err
 		}
 		// 添加
-		err = user.Create()
+		err = user.Create(ctx)
 		if err != nil {
 			return err
 		}

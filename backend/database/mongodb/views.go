@@ -1,13 +1,13 @@
 package mongodb
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"time"
 
-	"goi_example/backend/utils/mongodb"
-
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -50,7 +50,7 @@ func listView(request *goi.Request) any {
 		}
 	}
 
-	ctx, cancel := mongodb.WithTimeout(10)
+	ctx, cancel := context.WithTimeout(request.Object.Context(), 10*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -106,7 +106,7 @@ func createView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	ctx, cancel := mongodb.WithTimeout(5)
+	ctx, cancel := context.WithTimeout(request.Object.Context(), 5*time.Second)
 	defer cancel()
 
 	document := &DocumentModel{
@@ -156,7 +156,7 @@ func retrieveView(request *goi.Request) any {
 
 	filter := bson.M{"_id": pk}
 
-	ctx, cancel := mongodb.WithTimeout(5)
+	ctx, cancel := context.WithTimeout(request.Object.Context(), 5*time.Second)
 	defer cancel()
 	err := collection.FindOne(ctx, filter).Decode(instance)
 	if err != nil {
@@ -204,7 +204,7 @@ func updateView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	ctx, cancel := mongodb.WithTimeout(5)
+	ctx, cancel := context.WithTimeout(request.Object.Context(), 5*time.Second)
 	defer cancel()
 
 	// 执行查询操作
@@ -268,7 +268,7 @@ func deleteView(request *goi.Request) any {
 		return validationErr.Response()
 	}
 
-	ctx, cancel := mongodb.WithTimeout(5)
+	ctx, cancel := context.WithTimeout(request.Object.Context(), 5*time.Second)
 	defer cancel()
 
 	// 执行查询操作

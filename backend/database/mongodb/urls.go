@@ -3,7 +3,7 @@ package mongodb
 import (
 	"goi_example/backend/database"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
 func init() {

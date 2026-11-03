@@ -1,7 +1,7 @@
 package mongodb
 
 import (
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 )
 
 func GetTime() ISODate {

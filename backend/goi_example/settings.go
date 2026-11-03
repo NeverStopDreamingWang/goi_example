@@ -14,11 +14,11 @@ import (
 	"goi_example/backend/utils/redisdb"
 	"goi_example/backend/utils/sqlite3db"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/middleware/clickjacking"
-	"github.com/NeverStopDreamingWang/goi/v2/middleware/common"
-	"github.com/NeverStopDreamingWang/goi/v2/middleware/corsheaders"
-	"github.com/NeverStopDreamingWang/goi/v2/middleware/security"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/middleware/clickjacking"
+	"github.com/NeverStopDreamingWang/goi/v3/middleware/common"
+	"github.com/NeverStopDreamingWang/goi/v3/middleware/corsheaders"
+	"github.com/NeverStopDreamingWang/goi/v3/middleware/security"
 )
 
 // Http 服务
@@ -38,7 +38,10 @@ func init() {
 	// fmt.Println("goi 版本", version)
 
 	// 项目路径
-	Server.Settings.BaseDir, _ = os.Getwd()
+	Server.Settings.BaseDir, err = os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 
 	// 加载 Config 配置
 	err = Config.Load()

@@ -7,10 +7,10 @@ import (
 
 	"goi_example/backend/permission/role"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 // 参数验证
@@ -36,6 +36,7 @@ type userList struct {
 }
 
 func listView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params listValidParams
 	var queryParams goi.Params
 	var validationErr goi.ValidationError
@@ -62,7 +63,7 @@ func listView(request *goi.Request) any {
 	if params.DepartmentId != nil {
 		sqlite3DB = sqlite3DB.Where("`department_id` = ?", params.DepartmentId)
 	}
-	total, totalPage, err := sqlite3DB.Page(params.Page, params.PageSize)
+	total, totalPage, err := sqlite3DB.Page(ctx, params.Page, params.PageSize)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -72,7 +73,7 @@ func listView(request *goi.Request) any {
 	}
 
 	var userList []*userList
-	err = sqlite3DB.Select(&userList)
+	err = sqlite3DB.Select(ctx, &userList)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -84,7 +85,7 @@ func listView(request *goi.Request) any {
 	for _, user := range userList {
 		sqlite3DB.SetModel(role.RoleModel{})
 		user.Role = &role.RoleModel{}
-		err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
+		err = sqlite3DB.Where("`id` = ?", user.RoleId).First(ctx, user.Role)
 		if err != nil {
 			continue
 		}
@@ -112,6 +113,7 @@ type createValidParams struct {
 }
 
 func createView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params createValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -131,7 +133,7 @@ func createView(request *goi.Request) any {
 	}
 
 	// 参数验证
-	err := user.Validate()
+	err := user.Validate(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -140,7 +142,7 @@ func createView(request *goi.Request) any {
 		}
 	}
 	// 添加
-	err = user.Create()
+	err = user.Create(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -157,6 +159,7 @@ func createView(request *goi.Request) any {
 }
 
 func retrieveView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var validationErr goi.ValidationError
 	validationErr = request.PathParams.Get("pk", &pk) // 路由传参
@@ -168,7 +171,7 @@ func retrieveView(request *goi.Request) any {
 
 	user := &UserModel{}
 	sqlite3DB.SetModel(UserModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(user)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, user)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -201,6 +204,7 @@ type updateValidParams struct {
 }
 
 func updateView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var params updateValidParams
 	var bodyParams goi.Params
@@ -221,7 +225,7 @@ func updateView(request *goi.Request) any {
 
 	instance := &UserModel{}
 	sqlite3DB.SetModel(UserModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -247,7 +251,7 @@ func updateView(request *goi.Request) any {
 	}
 
 	// 参数验证
-	err = user.Validate()
+	err = user.Validate(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -256,7 +260,7 @@ func updateView(request *goi.Request) any {
 		}
 	}
 	// 更新
-	err = instance.Update(user)
+	err = instance.Update(ctx, user)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -272,6 +276,7 @@ func updateView(request *goi.Request) any {
 }
 
 func deleteView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var pk int64
 	var validationErr goi.ValidationError
 
@@ -284,14 +289,14 @@ func deleteView(request *goi.Request) any {
 
 	instance := &UserModel{}
 	sqlite3DB.SetModel(UserModel{})
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
 			Message: "用户不存在",
 		}
 	}
-	err = instance.Delete()
+	err = instance.Delete(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,

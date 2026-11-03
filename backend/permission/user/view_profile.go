@@ -7,11 +7,11 @@ import (
 
 	"goi_example/backend/permission/role"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/auth"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
-	"github.com/NeverStopDreamingWang/goi/v2/response"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/auth"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/response"
 )
 
 type userMenuList struct {
@@ -36,6 +36,7 @@ type profileUser struct {
 }
 
 func profileRetrieveView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	// 获取当前用户信息
 	var userObject UserModel
 	validationErr := request.Params.Get("user", &userObject)
@@ -46,7 +47,7 @@ func profileRetrieveView(request *goi.Request) any {
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	user := profileUser{}
 	sqlite3DB.SetModel(UserModel{})
-	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(&user)
+	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(ctx, &user)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -64,7 +65,7 @@ func profileRetrieveView(request *goi.Request) any {
 
 	user.Role = &role.RoleModel{}
 	sqlite3DB.SetModel(role.RoleModel{})
-	err = sqlite3DB.Where("`id` = ?", user.RoleId).First(user.Role)
+	err = sqlite3DB.Where("`id` = ?", user.RoleId).First(ctx, user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.Data{
@@ -82,7 +83,7 @@ func profileRetrieveView(request *goi.Request) any {
 
 	roleMenuList := []role.RoleMenuModel{}
 	sqlite3DB.SetModel(role.RoleMenuModel{})
-	err = sqlite3DB.Where("role_id = ?", user.RoleId).Select(&roleMenuList)
+	err = sqlite3DB.Where("role_id = ?", user.RoleId).Select(ctx, &roleMenuList)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -96,7 +97,7 @@ func profileRetrieveView(request *goi.Request) any {
 	sqlite3DB.SetModel(role.MenuModel{})
 	for i, roleMenu := range roleMenuList {
 		MenuList[i] = &userMenuList{}
-		err = sqlite3DB.Where("id = ?", roleMenu.MenuId).First(MenuList[i])
+		err = sqlite3DB.Where("id = ?", roleMenu.MenuId).First(ctx, MenuList[i])
 		if err != nil {
 			return response.Data{
 				Code:    http.StatusInternalServerError,
@@ -123,6 +124,7 @@ type profileUpdateValidParams struct {
 }
 
 func profileUpdateView(request *goi.Request) any {
+	ctx := request.Object.Context()
 	var params profileUpdateValidParams
 	var bodyParams goi.Params
 	var validationErr goi.ValidationError
@@ -144,7 +146,7 @@ func profileUpdateView(request *goi.Request) any {
 
 	instance := &UserModel{}
 	sqlite3DB.SetModel(UserModel{})
-	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(instance)
+	err := sqlite3DB.Where("`id` = ?", userObject.Id).First(ctx, instance)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,
@@ -170,7 +172,7 @@ func profileUpdateView(request *goi.Request) any {
 	}
 
 	// 参数验证
-	err = user.Validate()
+	err = user.Validate(ctx)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusBadRequest,
@@ -179,7 +181,7 @@ func profileUpdateView(request *goi.Request) any {
 		}
 	}
 	// 更新
-	err = instance.Update(user)
+	err = instance.Update(ctx, user)
 	if err != nil {
 		return response.Data{
 			Code:    http.StatusInternalServerError,

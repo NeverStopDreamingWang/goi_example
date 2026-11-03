@@ -1,24 +1,25 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
 )
 
 import (
 	"errors"
 )
 
-func GetUser(pk any) (*UserModel, error) {
+func GetUser(ctx context.Context, pk any) (*UserModel, error) {
 	if pk == nil {
 		return nil, nil
 	}
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(UserModel{})
 	instance := &UserModel{}
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -27,19 +28,19 @@ func GetUser(pk any) (*UserModel, error) {
 	}
 	return instance, nil
 }
-func GetUserInfo(pk any) (*UserInfo, error) {
+func GetUserInfo(ctx context.Context, pk any) (*UserInfo, error) {
 	if pk == nil {
 		return nil, nil
 	}
 	var instance *UserModel
-	instance, err := GetUser(pk)
+	instance, err := GetUser(ctx, pk)
 	if err != nil {
 		return nil, err
 	}
 	return instance.ToUserInfo(), err
 }
 
-func GetUserMap(pk any) (map[string]any, error) {
+func GetUserMap(ctx context.Context, pk any) (map[string]any, error) {
 	if pk == nil {
 		return nil, nil
 	}
@@ -47,7 +48,7 @@ func GetUserMap(pk any) (map[string]any, error) {
 	sqlite3DB.SetModel(UserModel{})
 
 	var instance = map[string]any{}
-	err := sqlite3DB.Where("`id` = ?", pk).First(instance)
+	err := sqlite3DB.Where("`id` = ?", pk).First(ctx, instance)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err

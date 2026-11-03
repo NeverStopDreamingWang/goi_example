@@ -5,7 +5,7 @@ import (
 
 	"goi_example/backend/utils/mongodb"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
+	"github.com/NeverStopDreamingWang/goi/v3"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -52,8 +52,8 @@ func initDocument() error {
 
 	for _, item := range initDocumentList {
 		var (
-			Name    = item[1].(string)
-			Content = item[2].(string)
+			Name    = item[0].(string)
+			Content = item[1].(string)
 		)
 		document := &DocumentModel{
 			Name:    &Name,

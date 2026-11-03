@@ -1,18 +1,20 @@
 package role
 
 import (
+	"context"
 	"time"
 
-	"github.com/NeverStopDreamingWang/goi/v2"
-	"github.com/NeverStopDreamingWang/goi/v2/db"
-	"github.com/NeverStopDreamingWang/goi/v2/db/sqlite3"
+	"github.com/NeverStopDreamingWang/goi/v3"
+	"github.com/NeverStopDreamingWang/goi/v3/db"
+	"github.com/NeverStopDreamingWang/goi/v3/db/sqlite3"
 )
 
 func init() {
+	ctx := context.Background()
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
-	sqlite3DB.Migrate(MenuModel{})     // 菜单表
-	sqlite3DB.Migrate(RoleMenuModel{}) // 角色-菜单表
-	sqlite3DB.Migrate(RoleModel{})     // 角色表
+	sqlite3DB.Migrate(ctx, MenuModel{})     // 菜单表
+	sqlite3DB.Migrate(ctx, RoleMenuModel{}) // 角色-菜单表
+	sqlite3DB.Migrate(ctx, RoleModel{})     // 角色表
 }
 
 // 菜单表
@@ -41,6 +43,7 @@ func (MenuModel) ModelSet() *sqlite3.Settings {
 
 // 初始化菜单
 func initMenu() error {
+	ctx := context.Background()
 	initMenuList := [][]any{
 		{int64(1), nil, "首页", "home", "/home"},
 		{int64(2), int64(1), "仪表盘", "", "dashboard"},
@@ -48,7 +51,7 @@ func initMenu() error {
 
 	sqlite3DB := db.Connect[*sqlite3.Engine]("default")
 	sqlite3DB.SetModel(MenuModel{})
-	total, err := sqlite3DB.Count()
+	total, err := sqlite3DB.Count(ctx)
 	if err != nil {
 		return err
 	}
@@ -65,7 +68,7 @@ func initMenu() error {
 		)
 
 		sqlite3DB.SetModel(MenuModel{})
-		total, err = sqlite3DB.Where("`id` = ?", Id).Count()
+		total, err = sqlite3DB.Where("`id` = ?", Id).Count(ctx)
 		if err != nil {
 			return err
 		}
@@ -84,7 +87,7 @@ func initMenu() error {
 			menu.ParentId = &ParentId
 		}
 		sqlite3DB.SetModel(MenuModel{})
-		_, err = sqlite3DB.Insert(&menu)
+		_, err = sqlite3DB.Insert(ctx, &menu, true)
 		if err != nil {
 			return err
 		}
@@ -118,6 +121,7 @@ func (RoleModel) ModelSet() *sqlite3.Settings {
 
 // 初始化角色
 func initRole() error {
+	ctx := context.Background()
 	initRoleList := [][]any{
 		{int64(1), "超级管理员"},
 	}
@@ -125,7 +129,7 @@ func initRole() error {
 
 	var menuList []*MenuModel
 	sqlite3DB.SetModel(MenuModel{})
-	err := sqlite3DB.Select(&menuList)
+	err := sqlite3DB.Select(ctx, &menuList)
 	if err != nil {
 		return err
 	}
@@ -146,11 +150,11 @@ func initRole() error {
 		for _, menu := range menuList {
 			role.MenuList = append(role.MenuList, menu.Id)
 		}
-		err := role.Validate()
+		err := role.Validate(ctx)
 		if err != nil {
 			return err
 		}
-		err = role.Create()
+		err = role.Create(ctx)
 		if err != nil {
 			return err
 		}

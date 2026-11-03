@@ -52,69 +52,37 @@ func (validationErr validationError) Response() goi.Response {
 
 type phoneValidator struct{}
 
-func (validator phoneValidator) Validate(value any) goi.ValidationError {
-	switch typeValue := value.(type) {
-	case int:
-		valueStr := strconv.Itoa(typeValue)
-		var reStr = `^(1[3456789]\d{9})$`
-		re := regexp.MustCompile(reStr)
-		if re.MatchString(valueStr) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
-	case string:
-		var reStr = `^(1[3456789]\d{9})$`
-		re := regexp.MustCompile(reStr)
-		if re.MatchString(typeValue) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
-	default:
-		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
-	}
-	return nil
-}
+var phoneRe = regexp.MustCompile(`^(1[3456789]\d{9})$`)
 
-func (validator phoneValidator) ToGo(value any) (any, goi.ValidationError) {
+// Parse 验证手机号并返回字符串，与参数结构体的手机号字段类型保持一致。
+func (validator phoneValidator) Parse(value any) (any, goi.ValidationError) {
+	var phone string
 	switch typeValue := value.(type) {
 	case int:
-		return typeValue, nil
+		phone = strconv.Itoa(typeValue)
 	case string:
-		intValue, err := strconv.Atoi(typeValue)
-		if err != nil {
-			return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
-		}
-		return intValue, nil
+		phone = typeValue
 	default:
-		// 尝试转换为字符串
-		return fmt.Sprintf("%v", value), nil
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 	}
+	if !phoneRe.MatchString(phone) {
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
+	}
+	return phone, nil
 }
 
 // MongoDB objectId  类型
 type objectIdValidator struct{}
 
-func (validator objectIdValidator) Validate(value any) goi.ValidationError {
-	switch typeValue := value.(type) {
-	case string:
-		var reStr = `^([a-fA-F0-9]{24})$`
-		re := regexp.MustCompile(reStr)
-		if re.MatchString(typeValue) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
-	default:
-		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
+// Parse 验证十六进制 ObjectID 字符串并转换为 bson.ObjectID。
+func (validator objectIdValidator) Parse(value any) (any, goi.ValidationError) {
+	text, ok := value.(string)
+	if !ok {
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 	}
-	return nil
-}
-
-func (validator objectIdValidator) ToGo(value any) (any, goi.ValidationError) {
-	switch typeValue := value.(type) {
-	case string:
-		objectId, err := bson.ObjectIDFromHex(typeValue)
-		if err != nil {
-			return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
-		}
-		return objectId, nil
-	default:
-		return typeValue, nil
+	objectId, err := bson.ObjectIDFromHex(text)
+	if err != nil {
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
 	}
+	return objectId, nil
 }

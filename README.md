@@ -2,7 +2,7 @@
 
 一个用于存放 Goi 示例和教程的资源库。
 
-当前示例依赖 **Goi v3.0.1**（`github.com/NeverStopDreamingWang/goi/v3`）。下面的导入和 ORM 调用均按 v3 接口编写；MongoDB 驱动仍使用其自身的 `go.mongodb.org/mongo-driver/v2`，不要一起替换。
+当前示例依赖 **Goi v3.0.2**（`github.com/NeverStopDreamingWang/goi/v3`）。下面的导入和 ORM 调用均按 v3 接口编写；MongoDB 驱动仍使用其自身的 `go.mongodb.org/mongo-driver/v2`，不要一起替换。
 
 ## 项目结构
 
@@ -66,6 +66,19 @@ go run ./server
 
 默认配置只启用 SQLite；启用 MySQL、Redis 或 MongoDB 时，需要自行准备服务和凭据，并检查 MySQL 模型的 `Settings.Schema` 与目标数据库是否一致。迁移不会自动创建数据库。本仓库目前仍在包 `init` 中加载配置、注册路由并迁移 SQL 模型，因此导入这些包就可能访问数据库；不要把普通包测试或帮助命令视为完全无副作用的检查。示例密钥与初始化账号仅供本地演示，不应直接用于生产。
 
+### 本地验证（不启动服务）
+
+在仓库根目录运行以下已验证的检查命令。SQLite 测试仍需启用 CGO，并安装可用的 C 编译器：
+
+```sh
+go build ./...
+go vet ./...
+go test ./backend/utils/...
+go test ./backend/goi_example/validator.go ./backend/goi_example/validator_test.go
+```
+
+最后一条使用显式文件列表，仅测试验证器，避开项目配置和应用的 `init` 初始化；不要直接替换为整个配置包的测试。普通 `go test ./...` 包含会启动服务器的测试，不作为这里的无监听检查命令。
+
 ### 获取 Goi
 
 通过 Go 的模块支持，当你在代码中添加导入时，`go [build|run|test]` 会自动获取必要的依赖：
@@ -77,7 +90,7 @@ import "github.com/NeverStopDreamingWang/goi/v3"
 或者，使用 `go get`：
 
 ```bash
-go get github.com/NeverStopDreamingWang/goi/v3@v3.0.1
+go get github.com/NeverStopDreamingWang/goi/v3@v3.0.2
 ```
 
 ### 独立最小示例
@@ -497,10 +510,18 @@ func TestPhone(request *goi.Request) any {
 
 ## 内置 Validator 参数验证器
 
-* 包含参数验证
-* 包含参数解析
+Goi v3.0.2 的 `goi.Validator` 只需实现 `Parse(value any) (any, goi.ValidationError)`，一次完成验证和转换：成功返回可写入目标字段的 Go 值，失败返回 `nil` 和验证错误。旧自定义验证器需将 `Validate`、`ToGo` 的逻辑合并到 `Parse`；上面的路由转换器 `Converter.ToGo` 不受影响。
 
-实现 `goi.Validator` 接口
+当前内置规则：
+
+- `bool` 字符串遵循 `strconv.ParseBool` 的固定格式，例如 `TRUE`、`true`、`1`；不额外转换大小写或去除空白。
+- `int` 字符串通过 `strconv.Atoi` 转换，支持正负号，格式错误或超出当前平台 int 范围时返回验证错误；原生数值保持原类型。
+- `string` 使用 `fmt.Sprint` 转换，不等同于 JSON 编码；`slug`、`uuid` 必须整串匹配，UUID 仍只接受小写十六进制。
+- `slice` 接受切片及其单层指针，不接受原生数组；`slice`、`map` 的字符串直接进行 JSON 解析，兼容外层空白、多行和 `null`。JSON `null` 返回带类型的 nil 集合，不保证清空已有字段。
+
+`ParseParams` 根据字段标签选择验证器，再通过 `SetValue` 写入字段；`Params.Get` 不调用注册的验证器。原生 nil 仍按 `required`、`allow_null` 标签处理，允许 nil 时跳过赋值。
+
+完整规则及自定义方式见 [参数验证与类型转换指南](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.2/docs/validation.md)（[English](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.2/docs/validation.en.md)）。下面的示例分别返回 string、`bson.ObjectID` 和自定义 `Email`：
 
 ```go
 package goi_test
@@ -519,93 +540,50 @@ import (
 // phoneValidator 手机号验证器示例
 type phoneValidator struct{}
 
-func (validator phoneValidator) Validate(value any) goi.ValidationError {
+func (validator phoneValidator) Parse(value any) (any, goi.ValidationError) {
+	var valueStr string
 	switch typeValue := value.(type) {
 	case int:
-		valueStr := strconv.Itoa(typeValue)
-		var reStr = `^(1[3456789]\d{9})$`
-		re := regexp.MustCompile(reStr)
-		if !re.MatchString(valueStr) {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
+		valueStr = strconv.Itoa(typeValue)
 	case string:
-		var reStr = `^(1[3456789]\d{9})$`
-		re := regexp.MustCompile(reStr)
-		if !re.MatchString(typeValue) {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
+		valueStr = typeValue
 	default:
-		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 	}
-	return nil
-}
-
-func (validator phoneValidator) ToGo(value any) (any, goi.ValidationError) {
-	switch typeValue := value.(type) {
-	case int:
-		return strconv.Itoa(typeValue), nil
-	case string:
-		return typeValue, nil
-	default:
-		return fmt.Sprintf("%v", value), nil
+	if !regexp.MustCompile(`^(1[3456789]\d{9})$`).MatchString(valueStr) {
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
 	}
+	return valueStr, nil
 }
 
 // MongoDB objectId  类型
 type objectIdValidator struct{}
 
-func (validator objectIdValidator) Validate(value interface{}) goi.ValidationError {
-	switch typeValue := value.(type) {
-	case string:
-		var reStr = `^([a-fA-F0-9]{24})$`
-		re := regexp.MustCompile(reStr)
-		if re.MatchString(typeValue) == false {
-			return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数错误：%v", value))
-		}
-	default:
-		return goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
+func (validator objectIdValidator) Parse(value any) (any, goi.ValidationError) {
+	valueStr, ok := value.(string)
+	if !ok {
+		return nil, goi.NewValidationError(http.StatusBadRequest, fmt.Sprintf("参数类型错误：%v", value))
 	}
-	return nil
-}
-
-func (validator objectIdValidator) ToGo(value interface{}) (interface{}, goi.ValidationError) {
-	switch typeValue := value.(type) {
-	case string:
-		objectId, err := bson.ObjectIDFromHex(typeValue)
-		if err != nil {
-			return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
-		}
-		return objectId, nil
-	default:
-		return typeValue, nil
+	objectId, err := bson.ObjectIDFromHex(valueStr)
+	if err != nil {
+		return nil, goi.NewValidationError(http.StatusBadRequest, "ID 错误")
 	}
+	return objectId, nil
 }
 
 // emailValidator 邮箱验证器示例
 type emailValidator struct{}
 
-func (validator emailValidator) Validate(value any) goi.ValidationError {
+func (validator emailValidator) Parse(value any) (any, goi.ValidationError) {
 	switch v := value.(type) {
 	case string:
 		re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 		if !re.MatchString(v) {
-			return goi.NewValidationError(http.StatusBadRequest, "invalid email format")
+			return nil, goi.NewValidationError(http.StatusBadRequest, "invalid email format")
 		}
-		return nil
-	default:
-		return goi.NewValidationError(http.StatusBadRequest, "email must be string")
-	}
-}
-
-// 当解析参数值类型与结构体字段类型不一致，且结构体字段类型为自定义类型时，需要实现 ToGo 方法
-func (validator emailValidator) ToGo(value any) (any, goi.ValidationError) {
-	switch v := value.(type) {
-	case string:
-		// 转换类型，并返回
 		return Email{Address: v}, nil
 	default:
-		// Validate 会拦截返回
-		return nil, nil
+		return nil, goi.NewValidationError(http.StatusBadRequest, "email must be string")
 	}
 }
 

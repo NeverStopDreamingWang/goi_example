@@ -2,7 +2,7 @@
 
 一个用于存放 Goi 示例和教程的资源库。
 
-当前示例依赖 **Goi v3.0.2**（`github.com/NeverStopDreamingWang/goi/v3`）。下面的导入和 ORM 调用均按 v3 接口编写；MongoDB 驱动仍使用其自身的 `go.mongodb.org/mongo-driver/v2`，不要一起替换。
+当前示例依赖 **Goi v3.0.3**（`github.com/NeverStopDreamingWang/goi/v3`）。下面的导入和 ORM 调用均按 v3 接口编写；MongoDB 驱动仍使用其自身的 `go.mongodb.org/mongo-driver/v2`，不要一起替换。
 
 ## 项目结构
 
@@ -90,7 +90,7 @@ import "github.com/NeverStopDreamingWang/goi/v3"
 或者，使用 `go get`：
 
 ```bash
-go get github.com/NeverStopDreamingWang/goi/v3@v3.0.2
+go get github.com/NeverStopDreamingWang/goi/v3@v3.0.3
 ```
 
 ### 独立最小示例
@@ -510,7 +510,7 @@ func TestPhone(request *goi.Request) any {
 
 ## 内置 Validator 参数验证器
 
-Goi v3.0.2 的 `goi.Validator` 只需实现 `Parse(value any) (any, goi.ValidationError)`，一次完成验证和转换：成功返回可写入目标字段的 Go 值，失败返回 `nil` 和验证错误。旧自定义验证器需将 `Validate`、`ToGo` 的逻辑合并到 `Parse`；上面的路由转换器 `Converter.ToGo` 不受影响。
+Goi v3.0.3 的 `goi.Validator` 只需实现 `Parse(value any) (any, goi.ValidationError)`，一次完成验证和转换：成功返回可写入目标字段的 Go 值，失败返回 `nil` 和验证错误。旧自定义验证器需将 `Validate`、`ToGo` 的逻辑合并到 `Parse`；上面的路由转换器 `Converter.ToGo` 不受影响。
 
 当前内置规则：
 
@@ -521,7 +521,7 @@ Goi v3.0.2 的 `goi.Validator` 只需实现 `Parse(value any) (any, goi.Validati
 
 `ParseParams` 根据字段标签选择验证器，再通过 `SetValue` 写入字段；`Params.Get` 不调用注册的验证器。原生 nil 仍按 `required`、`allow_null` 标签处理，允许 nil 时跳过赋值。
 
-完整规则及自定义方式见 [参数验证与类型转换指南](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.2/docs/validation.md)（[English](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.2/docs/validation.en.md)）。下面的示例分别返回 string、`bson.ObjectID` 和自定义 `Email`：
+完整规则及自定义方式见 [参数验证与类型转换指南](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.3/docs/validation.md)（[English](https://github.com/NeverStopDreamingWang/goi/blob/v3.0.3/docs/validation.en.md)）。下面的示例分别返回 string、`bson.ObjectID` 和自定义 `Email`：
 
 ```go
 package goi_test
@@ -631,6 +631,8 @@ func TestRegisterValidator(t *testing.T) {
 ## ORM 模型
 
 本仓库演示 MySQL 和 SQLite3，下面以 SQLite3 为例。Goi 还提供其它数据库方言，具体接口与扩展方式见 Goi 仓库的 `db/README.md`。
+
+v3.0.3 的原生方言默认解析器支持在 `ExecuteContext`、`QueryContext`、`QueryRowContext` 及其无 Context 方法中使用 `IN ?`、`NOT IN ?`，集合参数传切片、数组或其非 nil 指针；字节切片不展开，空集合生成 `()`。`IN (?)` 不自动展开，须手动提供括号内的占位符与参数。自定义 `PlaceholderParser.Parse` 现需返回 `(string, []any)`，分别作为最终执行的 SQL 和参数；本示例使用内置解析器，无需自定义实现。
 
 v3 的迁移、CRUD、统计、分页和事务方法直接接收 `context.Context`；HTTP 业务应传入 `request.Object.Context()`，下面的独立示例使用 `context.Background()`。`Insert`、`Update` 还需显式传入 `skipNil`：`true` 跳过 nil，`false` 将选中的 nil 写为 SQL NULL；普通零值不会被跳过，用 `Fields` 控制写入范围。`Update`、`Delete` 无 WHERE 时会操作整张表，务必检查条件。
 

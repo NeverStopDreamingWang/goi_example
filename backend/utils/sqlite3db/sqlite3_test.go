@@ -161,4 +161,60 @@ func TestConnectGoiV3ORM(t *testing.T) {
 		Update(canceled, ormCompatibilityModel{Name: &name}, true); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled update error=%v", err)
 	}
+
+	// v3.0.3 的基础 SQL 入口也应展开集合，并将展开后的参数交给真实 SQLite 驱动。
+	var matched int64
+	err = engine.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM orm_compatibility WHERE id IN ? AND id NOT IN ? AND name = ?",
+		[]int64{id}, [1]int64{-1}, updatedName).Scan(&matched)
+	if err != nil || matched != 1 {
+		t.Fatalf("QueryRowContext IN expansion: count=%d, error=%v", matched, err)
+	}
+	queryRows, err := engine.QueryContext(ctx,
+		"SELECT id FROM orm_compatibility WHERE id IN ? AND name = ?", []int64{id}, updatedName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer queryRows.Close()
+	var selectedID int64
+	if !queryRows.Next() {
+		t.Fatalf("QueryContext IN expansion returned no row: %v", queryRows.Err())
+	}
+	if err := queryRows.Scan(&selectedID); err != nil || selectedID != id {
+		t.Fatalf("QueryContext IN expansion: id=%d, error=%v", selectedID, err)
+	}
+	if queryRows.Next() || queryRows.Err() != nil {
+		t.Fatalf("QueryContext IN expansion returned unexpected rows: %v", queryRows.Err())
+	}
+	if err := queryRows.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// 在事务中验证写入与读取，并回滚，确认集合展开不会绕过当前事务。
+	err = engine.WithTransaction(ctx, func(tx *sqlite3.Engine, _ ...any) error {
+		result, err := tx.ExecuteContext(ctx,
+			"UPDATE orm_compatibility SET name = ? WHERE id IN ?", "raw-transaction", [1]int64{id})
+		if err != nil {
+			return err
+		}
+		if affected, err := result.RowsAffected(); err != nil || affected != 1 {
+			return errors.New("ExecuteContext IN expansion did not update one row")
+		}
+		var transactionName string
+		if err := tx.QueryRowContext(ctx,
+			"SELECT name FROM orm_compatibility WHERE id IN ?", []int64{id}).Scan(&transactionName); err != nil {
+			return err
+		}
+		if transactionName != "raw-transaction" {
+			return errors.New("raw SQL query did not use the current transaction")
+		}
+		return rollback
+	})
+	if !errors.Is(err, rollback) {
+		t.Fatalf("raw SQL transaction error=%v, want rollback sentinel", err)
+	}
+	got = readRecord()
+	if got.Name == nil || *got.Name != updatedName {
+		t.Fatalf("raw SQL transaction did not roll back: %+v", got)
+	}
 }
